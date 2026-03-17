@@ -1,6 +1,7 @@
 export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user',
+  CONSUMER = 'consumer',
+  STORE = 'store',
+  DELIVERY = 'delivery',
 }
 
 export interface CreateUserDTO {

@@ -20,22 +20,29 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.headers.authorization) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
     throw Boom.unauthorized('Authorization header is missing');
   }
 
-  const token = req.headers.authorization.split(' ')[1];
+  if (!authHeader.startsWith('Bearer ')) {
+    throw Boom.unauthorized('Invalid authorization format');
+  }
+
+  const token = authHeader.split(' ')[1];
 
   if (!token) {
     throw Boom.unauthorized('Token is missing');
   }
 
-  const userResponse = await supabase.auth.getUser(token);
+  const { data, error } = await supabase.auth.getUser(token);
 
-  if (userResponse.error) {
-    throw Boom.unauthorized(userResponse.error.message);
+  if (error || !data.user) {
+    throw Boom.unauthorized('Invalid or expired token');
   }
 
-  req.user = userResponse.data.user;
+  req.user = data.user;
+
   next();
 };
