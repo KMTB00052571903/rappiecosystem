@@ -1,7 +1,6 @@
 import express from 'express'
 import { NODE_ENV, PORT } from './config'
 import cors from 'cors'
-import serverless from 'serverless-http' // 🔥 IMPORTANTE
 
 import { errorsMiddleware } from './middlewares/errorsMiddleware'
 
@@ -37,7 +36,7 @@ app.use('/api/stores', storeRouter)
 app.use(errorsMiddleware)
 
 // =========================
-// 🟢 LOCAL SERVER (SOLO DEV)
+// 🟢 LOCAL SERVER
 // =========================
 if (NODE_ENV !== 'production') {
   app.listen(PORT, () => {
@@ -45,7 +44,4 @@ if (NODE_ENV !== 'production') {
   })
 }
 
-// =========================
-// ☁️ VERCEL EXPORT
-// =========================
-export default serverless(app)
+export default app
