@@ -22,58 +22,74 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   // 🔐 LOGIN
   // =========================
-  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  const loginForm = document.getElementById('loginForm')
+
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault()
 
     const email = document.getElementById('loginEmail').value
     const password = document.getElementById('loginPassword').value
 
-    const user = await loginUser(email, password)
+    try {
+      const user = await loginUser(email, password)
 
-    if (user) {
-      setSession(user)
+      if (user) {
+        setSession(user)
 
-      loginSection.classList.add('hidden')
-      mainSection.classList.remove('hidden')
+        loginSection.classList.add('hidden')
+        mainSection.classList.remove('hidden')
 
-      userName.textContent = user.email
+        userName.textContent = user.email
 
-      renderOrders('pendiente')
-    } else {
-      alert('Error al iniciar sesión')
+        renderOrders('pendiente')
+      } else {
+        alert('Error al iniciar sesión')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('Error en login (backend caído seguramente 😅)')
     }
   })
 
   // =========================
   // 📝 REGISTER
   // =========================
-  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  const registerForm = document.getElementById('registerForm')
+
+  registerForm.addEventListener('submit', async (e) => {
     e.preventDefault()
 
     const email = document.getElementById('registerEmail').value
     const password = document.getElementById('registerPassword').value
     const role = document.getElementById('registerRole').value
 
-    const data = await registerUser({ email, password, role })
+    try {
+      const data = await registerUser({ email, password, role })
 
-    if (data) {
-      setSession(data)
+      if (data) {
+        setSession(data)
 
-      loginSection.classList.add('hidden')
-      mainSection.classList.remove('hidden')
+        loginSection.classList.add('hidden')
+        mainSection.classList.remove('hidden')
 
-      userName.textContent = data.email
+        userName.textContent = data.email
 
-      renderOrders('pendiente')
-    } else {
-      alert('Error en registro')
+        renderOrders('pendiente')
+      } else {
+        alert('Error en registro')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('Error en registro (backend caído seguramente 😅)')
     }
   })
 
   // =========================
   // 🚪 LOGOUT
   // =========================
-  document.getElementById('logoutBtn').addEventListener('click', () => {
+  const logoutBtn = document.getElementById('logoutBtn')
+
+  logoutBtn.addEventListener('click', () => {
     clearSession()
 
     mainSection.classList.add('hidden')
@@ -81,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 
   // =========================
-  // 📂 TABS
+  // 📂 TABS (PEDIDOS)
   // =========================
   const pendingTab = document.getElementById('pendingTab')
   const acceptedTab = document.getElementById('acceptedTab')
@@ -94,6 +110,29 @@ document.addEventListener('DOMContentLoaded', () => {
   acceptedTab.addEventListener('click', () => {
     setActiveTab(acceptedTab, pendingTab)
     renderOrders('aceptado')
+  })
+
+  // =========================
+  // 🔁 TABS (LOGIN / REGISTER)
+  // =========================
+  const authTabs = document.querySelectorAll('.tabs .tab')
+  const forms = document.querySelectorAll('.form')
+
+  authTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      // quitar active
+      authTabs.forEach((t) => t.classList.remove('active'))
+      forms.forEach((f) => f.classList.remove('active'))
+
+      // activar tab
+      tab.classList.add('active')
+
+      // mostrar form correcto
+      const target = tab.dataset.tab
+      const form = document.getElementById(target + 'Form')
+
+      if (form) form.classList.add('active')
+    })
   })
 })
 
