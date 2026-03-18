@@ -6,27 +6,28 @@
   <title>Mini Rappi - Ordenar Comida</title>
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- Fuentes e iconos -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet" />
 </head>
+
 <body>
   <div class="container">
 
-    <!-- Header -->
+    <!-- HEADER -->
     <header class="header">
-      <div class="header-left">
+      <div>
         <h1 class="logo">🛒 Mini Rappi</h1>
         <p class="subtitle">Ordenar Comida</p>
       </div>
 
-      <!-- 🔥 oculto por defecto -->
+      <!-- 🔥 oculto -->
       <button id="logoutBtn" class="btn hidden">Cerrar Sesión</button>
     </header>
 
-    <!-- LOGIN / REGISTER -->
+    <!-- LOGIN -->
     <section id="loginSection" class="section">
-      <div class="card">
+      <div class="card auth-card">
+
         <h2>Bienvenido</h2>
         <p>Inicia sesión o regístrate</p>
 
@@ -36,47 +37,35 @@
         </div>
 
         <!-- LOGIN -->
-       <section id="loginSection" class="section">
-  <div class="card auth-card">
+        <form id="loginForm" class="form active">
+          <label>Email
+            <input type="email" id="loginEmail" required />
+          </label>
 
-    <h2>Bienvenido</h2>
-    <p>Inicia sesión o regístrate</p>
+          <label>Contraseña
+            <input type="password" id="loginPassword" required />
+          </label>
 
-    <div class="tabs">
-      <button class="tab active" data-tab="login">Iniciar Sesión</button>
-      <button class="tab" data-tab="register">Registrarse</button>
-    </div>
+          <button type="submit" class="btn primary">Entrar</button>
+        </form>
 
-    <!-- LOGIN -->
-    <form id="loginForm" class="form active">
-      <label>Email
-        <input type="email" id="loginEmail" required />
-      </label>
+        <!-- REGISTER -->
+        <form id="registerForm" class="form">
+          <label>Email
+            <input type="email" id="registerEmail" required />
+          </label>
 
-      <label>Contraseña
-        <input type="password" id="loginPassword" required />
-      </label>
+          <label>Contraseña
+            <input type="password" id="registerPassword" required />
+          </label>
 
-      <button type="submit" class="btn primary">Entrar</button>
-    </form>
+          <button type="submit" class="btn primary">Registrarse</button>
+        </form>
 
-    <!-- REGISTER -->
-    <form id="registerForm" class="form">
-      <label>Email
-        <input type="email" id="registerEmail" required />
-      </label>
+      </div>
+    </section>
 
-      <label>Contraseña
-        <input type="password" id="registerPassword" required />
-      </label>
-
-      <button type="submit" class="btn primary">Registrarse</button>
-    </form>
-
-  </div>
-</section>
-
-    <!-- MAIN APP -->
+    <!-- MAIN -->
     <section id="mainSection" class="section hidden">
 
       <div class="user-info">
@@ -136,23 +125,8 @@
 
     </section>
 
-    <!-- FEEDBACK -->
-    <div id="loading" class="overlay hidden">
-      <div class="spinner"></div>
-      <p>Cargando...</p>
-    </div>
-
-    <div id="errorMessage" class="overlay hidden">
-      <p id="errorText"></p>
-    </div>
-
-    <div id="successMessage" class="overlay hidden">
-      <p id="successText"></p>
-    </div>
-
   </div>
 
-  <!-- 🔥 IMPORTANTE -->
   <script type="module" src="index.js"></script>
 </body>
 </html>
