@@ -1,0 +1,22 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "backend": true,
+      "consumer": false,
+      "delivery": false,
+      "store": false
+    }
+  },
+  "builds": [
+    {
+      "src": "backend/api/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "backend/api/index.ts"
+    }
+  ]
+}
