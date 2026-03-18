@@ -1,6 +1,7 @@
 import express from 'express'
 import { NODE_ENV, PORT } from './config'
 import cors from 'cors'
+import serverless from 'serverless-http' // 🔥 IMPORTANTE
 
 import { errorsMiddleware } from './middlewares/errorsMiddleware'
 
@@ -10,9 +11,15 @@ import { router as storeRouter } from './features/stores/store.router'
 
 const app = express()
 
+// =========================
+// 🔧 MIDDLEWARES
+// =========================
 app.use(express.json())
 app.use(cors())
 
+// =========================
+// 🏠 ROOT
+// =========================
 app.get('/', (req, res) => {
   res.send('Hello, World!!!!!')
 })
@@ -22,7 +29,7 @@ app.get('/', (req, res) => {
 // =========================
 app.use('/api/auth', authRouter)
 app.use('/api/products', productRouter)
-app.use('/api/stores', storeRouter) // 🔥 ESTA ERA LA QUE FALTABA
+app.use('/api/stores', storeRouter)
 
 // =========================
 // ❌ ERRORS
@@ -30,7 +37,7 @@ app.use('/api/stores', storeRouter) // 🔥 ESTA ERA LA QUE FALTABA
 app.use(errorsMiddleware)
 
 // =========================
-// 🟢 SERVER
+// 🟢 LOCAL SERVER (SOLO DEV)
 // =========================
 if (NODE_ENV !== 'production') {
   app.listen(PORT, () => {
@@ -38,4 +45,7 @@ if (NODE_ENV !== 'production') {
   })
 }
 
-export default app
+// =========================
+// ☁️ VERCEL EXPORT
+// =========================
+export default serverless(app)
