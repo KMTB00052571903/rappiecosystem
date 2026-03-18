@@ -1,0 +1,144 @@
+:root {
+  --rappi-orange: #ff4940;
+  --rappi-orange-dark: #e63946;
+  --rappi-green: #28a745;
+  --rappi-blue: #007bff;
+  --rappi-gray: #f8f9fa;
+  --rappi-gray-dark: #6c757d;
+  --rappi-black: #212529;
+  --shadow: 0 4px 12px rgba(0,0,0,0.1);
+  --radius: 12px;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: var(--rappi-black);
+  margin: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 25px;
+  background: var(--rappi-orange);
+  color: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.logo {
+  font-family: 'TASA Explorer', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.btn {
+  border: none;
+  border-radius: 25px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.btn.primary {
+  background: var(--rappi-orange);
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: var(--rappi-orange-dark);
+}
+
+.btn.secondary {
+  background: var(--rappi-gray-dark);
+  color: #fff;
+}
+
+.btn.secondary:hover {
+  background: var(--rappi-black);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.tab {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--rappi-gray);
+  cursor: pointer;
+  text-align: center;
+  transition: 0.3s;
+}
+
+.tab.active {
+  background: var(--rappi-orange);
+  color: #fff;
+}
+
+/* Cards */
+.card, .store-card, .product-card, .order-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  transition: 0.3s;
+}
+
+.store-card:hover, .product-card:hover, .order-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+/* Grid layouts */
+.grid {
+  display: grid;
+  gap: 20px;
+}
+
+.stores-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.products-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.orders-grid {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+/* Carrito */
+.carrito-sidebar {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.carrito-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.carrito-total {
+  font-weight: 700;
+  color: var(--rappi-orange);
+  text-align: center;
+  margin-top: 15px;
+}

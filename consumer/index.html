@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Rappi - Ordenar Comida</title>
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Fuentes e iconos -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="logo">🛒 Mini Rappi</h1>
+        <p class="subtitle">Ordenar Comida</p>
+      </div>
+      <button id="logoutBtn" class="btn">Cerrar Sesión</button>
+    </header>
+
+    <!-- LOGIN / REGISTER -->
+    <section id="loginSection" class="section">
+      <div class="card">
+        <h2>Bienvenido</h2>
+        <p>Inicia sesión o regístrate</p>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="login">Iniciar Sesión</button>
+          <button class="tab" data-tab="register">Registrarse</button>
+        </div>
+
+        <!-- LOGIN -->
+        <form id="loginForm" class="form active">
+          <label>Email
+            <input type="email" id="loginEmail" required />
+          </label>
+
+          <label>Contraseña
+            <input type="password" id="loginPassword" required />
+          </label>
+
+          <button type="submit" class="btn primary">Entrar</button>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="registerForm" class="form">
+          <label>Email
+            <input type="email" id="registerEmail" required />
+          </label>
+
+          <label>Contraseña
+            <input type="password" id="registerPassword" required />
+          </label>
+
+          <label>Rol
+            <select id="registerRole">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+
+          <button type="submit" class="btn primary">Registrarse</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- MAIN APP -->
+    <section id="mainSection" class="section hidden">
+
+      <div class="user-info">
+        <h3>¡Hola, <span id="userDisplay"></span>!</h3>
+        <p>¿Qué te gustaría comer hoy?</p>
+      </div>
+
+      <!-- NAV -->
+      <nav class="tabs">
+        <button id="storesTab" class="tab active">
+          <i class="ri-store-2-line"></i> Restaurantes
+        </button>
+
+        <button id="ordersTab" class="tab">
+          <i class="ri-shopping-bag-line"></i> Mis Pedidos
+        </button>
+      </nav>
+
+      <!-- STORES -->
+      <section id="storesSection" class="content active">
+        <header class="section-header">
+          <h2><i class="ri-restaurant-line"></i> Restaurantes</h2>
+          <button id="refreshStoresBtn" class="btn secondary">
+            <i class="ri-refresh-line"></i> Actualizar
+          </button>
+        </header>
+
+        <div id="storesList" class="grid"></div>
+      </section>
+
+      <!-- PRODUCTS -->
+      <section id="storeProductsSection" class="content hidden">
+        <header class="section-header">
+          <button id="backToStores" class="btn back">← Volver</button>
+          <h2 id="storeName">Productos</h2>
+        </header>
+
+        <div id="productsList" class="grid"></div>
+
+        <aside class="sidebar">
+          <h3><i class="ri-shopping-cart-line"></i> Carrito</h3>
+          <div id="carritoContainer"></div>
+        </aside>
+      </section>
+
+      <!-- ORDERS -->
+      <section id="myOrdersSection" class="content hidden">
+        <header class="section-header">
+          <h2><i class="ri-shopping-bag-line"></i> Mis Pedidos</h2>
+          <button id="refreshOrdersBtn" class="btn secondary">
+            <i class="ri-refresh-line"></i> Actualizar
+          </button>
+        </header>
+
+        <div id="myOrdersList" class="grid"></div>
+      </section>
+
+    </section>
+
+    <!-- FEEDBACK -->
+    <div id="loading" class="overlay hidden">
+      <div class="spinner"></div>
+      <p>Cargando...</p>
+    </div>
+
+    <div id="errorMessage" class="overlay hidden">
+      <p id="errorText"></p>
+    </div>
+
+    <div id="successMessage" class="overlay hidden">
+      <p id="successText"></p>
+    </div>
+
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
