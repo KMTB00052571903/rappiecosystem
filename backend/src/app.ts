@@ -17,21 +17,48 @@ app.use(express.json())
 app.use(cors())
 
 // =========================
-// 🏠 ROOT
+// 🏠 ROOT - SOLO UNA VEZ
 // =========================
 app.get('/', (req, res) => {
-  res.send('API funcionando 🚀')
-})
+  res.json({ 
+    message: 'API is running!',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      stores: '/stores o /api/stores',
+      auth: '/auth/login o /api/auth/login',
+      products: '/products o /api/products',
+      health: '/health o /api/health'
+    }
+  });
+});
 
 // =========================
-// 🚀 ROUTES
+// ✅ RUTA DE SALUD
 // =========================
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// =========================
+// 🚀 ROUTES - CON Y SIN /api
+// =========================
+
+// Versión con /api (más común en APIs)
 app.use('/api/auth', authRouter)
 app.use('/api/products', productRouter)
 app.use('/api/stores', storeRouter)
 
+// Versión sin /api (para compatibilidad)
+app.use('/auth', authRouter)
+app.use('/products', productRouter)
+app.use('/stores', storeRouter)
+
 // =========================
-// ❌ ERRORS
+// ❌ ERRORS (siempre al final)
 // =========================
 app.use(errorsMiddleware)
 
@@ -44,5 +71,7 @@ if (process.env.NODE_ENV !== 'production') {
   })
 }
 
-// 👇 EXPORTACIÓN CLAVE PARA VERCEL
+// =========================
+// 📤 EXPORTACIÓN CLAVE PARA VERCEL
+// =========================
 export default app
