@@ -6,7 +6,6 @@
   <title>Mini Rappi - Tienda</title>
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=TASA+Explorer:wght@400;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet" />
 </head>
@@ -20,7 +19,9 @@
         <h1 class="logo">🏪 Mini Rappi</h1>
         <p class="subtitle">Gestión de Tienda</p>
       </div>
-      <button id="logoutBtn" class="btn secondary">Cerrar Sesión</button>
+
+      <!-- 🔥 oculto -->
+      <button id="logoutBtn" class="btn secondary hidden">Cerrar Sesión</button>
     </header>
 
     <!-- LOGIN -->
@@ -53,9 +54,6 @@
           <label>Password</label>
           <input type="password" id="registerPassword" required />
 
-          <!-- 🔥 importante -->
-          <input type="hidden" id="registerRole" value="admin" />
-
           <button type="submit" class="btn primary">Registrarse</button>
         </form>
       </div>
@@ -70,19 +68,14 @@
 
       <section class="content">
 
-        <!-- TABS -->
         <nav class="tabs">
           <button id="productsTab" class="tab active">Productos</button>
           <button id="ordersTab" class="tab">Pedidos</button>
         </nav>
 
-        <!-- PRODUCTS -->
         <div id="productsGrid" class="grid"></div>
-
-        <!-- ORDERS -->
         <div id="ordersGrid" class="grid hidden"></div>
 
-        <!-- FEEDBACK -->
         <div id="loading" class="overlay hidden">
           <div class="spinner"></div>
           <p>Cargando...</p>
@@ -97,7 +90,6 @@
 
   </div>
 
-<script type="module" src="index.js"></script>
-
+  <script type="module" src="index.js"></script>
 </body>
 </html>

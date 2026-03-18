@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginSection = document.getElementById('loginSection')
   const mainSection = document.getElementById('mainSection')
   const storeName = document.getElementById('storeName')
+  const logoutBtn = document.getElementById('logoutBtn')
 
   const productsTab = document.getElementById('productsTab')
   const ordersTab = document.getElementById('ordersTab')
@@ -21,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (existingStore) {
     loginSection.classList.add('hidden')
     mainSection.classList.remove('hidden')
+    logoutBtn.classList.remove('hidden')
+
     storeName.textContent = existingStore.email || 'Tienda'
     renderProducts()
   }
@@ -42,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginSection.classList.add('hidden')
         mainSection.classList.remove('hidden')
+        logoutBtn.classList.remove('hidden')
 
         storeName.textContent = store.email
 
@@ -64,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = document.getElementById('registerEmail').value
     const password = document.getElementById('registerPassword').value
 
-    // 🔥 FIX: rol fijo
     const role = "store"
 
     try {
@@ -75,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginSection.classList.add('hidden')
         mainSection.classList.remove('hidden')
+        logoutBtn.classList.remove('hidden')
 
         storeName.textContent = store.email
 
@@ -91,15 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   // 🚪 LOGOUT
   // =========================
-  document.getElementById('logoutBtn').addEventListener('click', () => {
+  logoutBtn.addEventListener('click', () => {
     clearSession()
 
     mainSection.classList.add('hidden')
     loginSection.classList.remove('hidden')
+    logoutBtn.classList.add('hidden')
   })
 
   // =========================
-  // 📂 TABS (PRODUCTS / ORDERS)
+  // 📂 TABS
   // =========================
   productsTab.addEventListener('click', () => {
     setActiveTab(productsTab, ordersTab)
@@ -120,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 
   // =========================
-  // 🔁 TABS (LOGIN / REGISTER)
+  // 🔁 LOGIN / REGISTER TABS
   // =========================
   const authTabs = document.querySelectorAll('.tabs .tab')
   const forms = document.querySelectorAll('.form')
@@ -140,9 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 })
 
-// =========================
-// 🔁 UI TABS
-// =========================
 function setActiveTab(active, inactive) {
   active.classList.add('active')
   inactive.classList.remove('active')
