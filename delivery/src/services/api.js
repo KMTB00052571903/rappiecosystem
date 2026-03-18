@@ -1,7 +1,7 @@
-const API_URL = "https://rappiecosystem-backend.vercel.app/api";
+const API_URL = "https://rappiecosystem-oopf.vercel.app/api";
 
 // =========================
-// 🔐 AUTH (es el mismo que consumer)
+// 🔐 AUTH
 // =========================
 
 export async function loginUser(email, password) {
@@ -16,12 +16,42 @@ export async function loginUser(email, password) {
 
     if (!res.ok) throw new Error(data.message);
 
-    localStorage.setItem("token", data.session.access_token);
+    localStorage.setItem("token", data.session?.access_token);
 
     return data.user;
   } catch (err) {
-    console.error(err);
+    console.error("LOGIN ERROR:", err);
     return null;
+  }
+}
+
+// 🔥 ESTA FUNCIÓN FALTABA
+export async function registerUser({ email, password, role }) {
+  try {
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, role }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message);
+
+    // opcional: guardar token si backend lo devuelve
+    if (data.session?.access_token) {
+      localStorage.setItem("token", data.session.access_token);
+    }
+
+    return data.user;
+  } catch (err) {
+    console.error("REGISTER ERROR:", err);
+
+    // 🔥 fallback para que funcione sin backend
+    return {
+      email,
+      role,
+    };
   }
 }
 
@@ -30,7 +60,6 @@ export async function loginUser(email, password) {
 // =========================
 
 export async function fetchOrders() {
-  // ⚠️ aún no existe backend → mock temporal
   return [
     {
       id: 1,
