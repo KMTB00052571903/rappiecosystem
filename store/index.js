@@ -34,19 +34,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = document.getElementById('loginEmail').value
     const password = document.getElementById('loginPassword').value
 
-    const store = await loginStore(email, password)
+    try {
+      const store = await loginStore(email, password)
 
-    if (store) {
-      setSession(store)
+      if (store) {
+        setSession(store)
 
-      loginSection.classList.add('hidden')
-      mainSection.classList.remove('hidden')
+        loginSection.classList.add('hidden')
+        mainSection.classList.remove('hidden')
 
-      storeName.textContent = store.email
+        storeName.textContent = store.email
 
-      renderProducts()
-    } else {
-      alert('Error al iniciar sesión')
+        renderProducts()
+      } else {
+        alert('Error al iniciar sesión')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('Error en login')
     }
   })
 
@@ -58,20 +63,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const email = document.getElementById('registerEmail').value
     const password = document.getElementById('registerPassword').value
-    const role = document.getElementById('registerRole').value
 
-    const store = await registerStore({ email, password, role })
+    // 🔥 FIX: rol fijo
+    const role = "store"
 
-    if (store) {
-      setSession(store)
+    try {
+      const store = await registerStore({ email, password, role })
 
-      loginSection.classList.add('hidden')
-      mainSection.classList.remove('hidden')
+      if (store) {
+        setSession(store)
 
-      storeName.textContent = store.email
+        loginSection.classList.add('hidden')
+        mainSection.classList.remove('hidden')
 
-      renderProducts()
-    } else {
+        storeName.textContent = store.email
+
+        renderProducts()
+      } else {
+        alert('Error en registro')
+      }
+    } catch (error) {
+      console.error(error)
       alert('Error en registro')
     }
   })
@@ -87,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 
   // =========================
-  // 📂 TABS
+  // 📂 TABS (PRODUCTS / ORDERS)
   // =========================
   productsTab.addEventListener('click', () => {
     setActiveTab(productsTab, ordersTab)
@@ -105,6 +117,26 @@ document.addEventListener('DOMContentLoaded', () => {
     productsGrid.classList.add('hidden')
 
     renderOrders()
+  })
+
+  // =========================
+  // 🔁 TABS (LOGIN / REGISTER)
+  // =========================
+  const authTabs = document.querySelectorAll('.tabs .tab')
+  const forms = document.querySelectorAll('.form')
+
+  authTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      authTabs.forEach((t) => t.classList.remove('active'))
+      forms.forEach((f) => f.classList.remove('active'))
+
+      tab.classList.add('active')
+
+      const target = tab.dataset.tab
+      const form = document.getElementById(target + 'Form')
+
+      if (form) form.classList.add('active')
+    })
   })
 })
 

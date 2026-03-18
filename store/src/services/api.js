@@ -1,4 +1,4 @@
-const API_URL = 'https://rappiecosystem-backend.vercel.app/api'
+const API_URL = 'https://rappiecosystem-oopf.vercel.app/api'
 
 // =========================
 // 🔑 TOKEN HELPER
