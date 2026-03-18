@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Rappi - Repartidor</title>
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Fuentes e iconos -->
+  <link href="https://fonts.googleapis.com/css2?family=TASA+Explorer:wght@400;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="logo">🚚 Mini Rappi</h1>
+        <p class="subtitle">Gestionar Pedidos</p>
+      </div>
+      <button id="logoutBtn" class="btn secondary">Cerrar Sesión</button>
+    </header>
+
+    <!-- LOGIN / REGISTER -->
+    <section id="loginSection" class="section">
+      <div class="card">
+        <h2>Acceso Repartidor</h2>
+        <p>Inicia sesión o regístrate</p>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="login">Iniciar Sesión</button>
+          <button class="tab" data-tab="register">Registrarse</button>
+        </div>
+
+        <!-- LOGIN -->
+        <form id="loginForm" class="form active">
+          <label>Email
+            <input type="email" id="loginEmail" required />
+          </label>
+
+          <label>Contraseña
+            <input type="password" id="loginPassword" required />
+          </label>
+
+          <button type="submit" class="btn primary">Entrar</button>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="registerForm" class="form">
+          <label>Email
+            <input type="email" id="registerEmail" required />
+          </label>
+
+          <label>Contraseña
+            <input type="password" id="registerPassword" required />
+          </label>
+
+          <label>Rol
+            <select id="registerRole">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+
+          <button type="submit" class="btn primary">Registrarse</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- MAIN -->
+    <section id="mainSection" class="section hidden">
+
+      <div class="user-info">
+        <h3>¡Hola, <span id="userName">Repartidor</span>!</h3>
+        <p>Gestiona tus pedidos</p>
+      </div>
+
+      <!-- ORDERS -->
+      <section id="ordersSection" class="content active">
+
+        <header class="section-header">
+          <h2><i class="ri-shopping-bag-line"></i> Pedidos</h2>
+        </header>
+
+        <!-- TABS -->
+        <nav class="tabs">
+          <button id="pendingTab" class="tab active">Pendientes</button>
+          <button id="acceptedTab" class="tab">Aceptados</button>
+        </nav>
+
+        <!-- GRID -->
+        <div id="ordersGrid" class="grid"></div>
+
+        <!-- LOADING -->
+        <div id="loading" class="overlay hidden">
+          <div class="spinner"></div>
+          <p>Cargando pedidos...</p>
+        </div>
+
+        <!-- EMPTY -->
+        <div id="noOrders" class="overlay hidden">
+          <i class="ri-shopping-bag-line"></i>
+          <h3>No hay pedidos disponibles</h3>
+          <p>Los pedidos aparecerán aquí</p>
+        </div>
+
+      </section>
+
+    </section>
+
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
