@@ -79,7 +79,7 @@ body {
   flex: 1;
   padding: 12px;
   border-radius: var(--radius);
-  background: var(--rappi-gray);
+  /* background: var(--rappi-gray); */
   cursor: pointer;
   text-align: center;
   transition: 0.3s;
@@ -141,4 +141,9 @@ body {
   color: var(--rappi-orange);
   text-align: center;
   margin-top: 15px;
+}
+
+
+.hidden {
+  display: none !important;
 }
