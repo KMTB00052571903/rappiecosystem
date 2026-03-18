@@ -7,15 +7,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginSection = document.getElementById('loginSection')
   const mainSection = document.getElementById('mainSection')
   const userDisplay = document.getElementById('userDisplay')
+  const logoutBtn = document.getElementById('logoutBtn')
 
   // =========================
-  // 🔁 AUTO LOGIN (persistencia)
+  // 🔁 AUTO LOGIN
   // =========================
   const existingUser = getSession()
 
   if (existingUser) {
     loginSection.classList.add('hidden')
     mainSection.classList.remove('hidden')
+    logoutBtn.classList.remove('hidden')
+
     userDisplay.textContent = existingUser.email
     renderStores()
   }
@@ -36,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       loginSection.classList.add('hidden')
       mainSection.classList.remove('hidden')
+      logoutBtn.classList.remove('hidden')
 
       userDisplay.textContent = data.user.email
 
@@ -53,7 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const email = document.getElementById('registerEmail').value
     const password = document.getElementById('registerPassword').value
-    const role = document.getElementById('registerRole').value
+
+    // 🔥 rol fijo
+    const role = "user"
 
     const data = await registerUser({ email, password, role })
 
@@ -62,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       loginSection.classList.add('hidden')
       mainSection.classList.remove('hidden')
+      logoutBtn.classList.remove('hidden')
 
       userDisplay.textContent = data.user.email
 
@@ -74,15 +81,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   // 🚪 LOGOUT
   // =========================
-  document.getElementById('logoutBtn').addEventListener('click', () => {
+  logoutBtn.addEventListener('click', () => {
     clearSession()
 
     mainSection.classList.add('hidden')
     loginSection.classList.remove('hidden')
+    logoutBtn.classList.add('hidden')
   })
 
   // =========================
-  // 📂 TABS
+  // 📂 TABS APP
   // =========================
   document.getElementById('storesTab').addEventListener('click', () => {
     renderStores()
@@ -93,6 +101,24 @@ document.addEventListener('DOMContentLoaded', () => {
     renderOrders()
     toggleTab('myOrdersSection')
   })
+
+  // =========================
+  // 🔁 TABS LOGIN / REGISTER
+  // =========================
+  const authTabs = document.querySelectorAll('.tabs .tab')
+  const forms = document.querySelectorAll('.form')
+
+  authTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      authTabs.forEach(t => t.classList.remove('active'))
+      forms.forEach(f => f.classList.remove('active'))
+
+      tab.classList.add('active')
+
+      const target = tab.dataset.tab
+      document.getElementById(target + 'Form').classList.add('active')
+    })
+  })
 })
 
 // =========================
@@ -102,7 +128,7 @@ function toggleTab(sectionId) {
   document.querySelectorAll('.content').forEach(sec => sec.classList.add('hidden'))
   document.getElementById(sectionId).classList.remove('hidden')
 
-  document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'))
+  document.querySelectorAll('#storesTab, #ordersTab').forEach(tab => tab.classList.remove('active'))
 
   if (sectionId === 'storesSection') {
     document.getElementById('storesTab').classList.add('active')

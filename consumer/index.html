@@ -19,7 +19,9 @@
         <h1 class="logo">🛒 Mini Rappi</h1>
         <p class="subtitle">Ordenar Comida</p>
       </div>
-      <button id="logoutBtn" class="btn">Cerrar Sesión</button>
+
+      <!-- 🔥 oculto por defecto -->
+      <button id="logoutBtn" class="btn hidden">Cerrar Sesión</button>
     </header>
 
     <!-- LOGIN / REGISTER -->
@@ -54,13 +56,6 @@
 
           <label>Contraseña
             <input type="password" id="registerPassword" required />
-          </label>
-
-          <label>Rol
-            <select id="registerRole">
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
           </label>
 
           <button type="submit" class="btn primary">Registrarse</button>
@@ -144,6 +139,7 @@
 
   </div>
 
-  <script src="index.js"></script>
+  <!-- 🔥 IMPORTANTE -->
+  <script type="module" src="index.js"></script>
 </body>
 </html>
