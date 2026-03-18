@@ -1,5 +1,5 @@
 import express from 'express'
-import { NODE_ENV, PORT } from './config'
+import { PORT } from './config'
 import cors from 'cors'
 
 import { errorsMiddleware } from './middlewares/errorsMiddleware'
@@ -36,9 +36,9 @@ app.use('/api/stores', storeRouter)
 app.use(errorsMiddleware)
 
 // =========================
-// 🟢 LOCAL SERVER
+// 🟢 LOCAL SERVER (FIX CLAVE)
 // =========================
-if (NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log('Server is running on http://localhost:' + PORT)
   })
