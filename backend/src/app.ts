@@ -1,7 +1,7 @@
 import express from 'express'
-import { PORT } from './config'
 import cors from 'cors'
 
+import { PORT } from './config'
 import { errorsMiddleware } from './middlewares/errorsMiddleware'
 
 import { router as authRouter } from './features/auth/auth.router'
@@ -20,7 +20,7 @@ app.use(cors())
 // 🏠 ROOT
 // =========================
 app.get('/', (req, res) => {
-  res.send('Hello, World!!!!!')
+  res.send('API funcionando 🚀')
 })
 
 // =========================
@@ -36,12 +36,13 @@ app.use('/api/stores', storeRouter)
 app.use(errorsMiddleware)
 
 // =========================
-// 🟢 LOCAL SERVER (FIX CLAVE)
+// 🟢 LOCAL SERVER ONLY
 // =========================
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
-    console.log('Server is running on http://localhost:' + PORT)
+    console.log(`🟢 Server running on http://localhost:${PORT}`)
   })
 }
 
+// 👇 EXPORTACIÓN CLAVE PARA VERCEL
 export default app
