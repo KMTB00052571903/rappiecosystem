@@ -61,7 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const email = document.getElementById('registerEmail').value
     const password = document.getElementById('registerPassword').value
-    const role = document.getElementById('registerRole').value
+
+    // 🔥 FIX: rol fijo (ya no existe en HTML)
+    const role = "repartidor"
 
     try {
       const data = await registerUser({ email, password, role })
@@ -120,14 +122,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   authTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
-      // quitar active
       authTabs.forEach((t) => t.classList.remove('active'))
       forms.forEach((f) => f.classList.remove('active'))
 
-      // activar tab
       tab.classList.add('active')
 
-      // mostrar form correcto
       const target = tab.dataset.tab
       const form = document.getElementById(target + 'Form')
 
