@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginSection = document.getElementById('loginSection')
   const mainSection = document.getElementById('mainSection')
   const userName = document.getElementById('userName')
+  const logoutBtn = document.getElementById('logoutBtn')
 
   // =========================
   // 🔁 AUTO LOGIN
@@ -15,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (existingUser) {
     loginSection.classList.add('hidden')
     mainSection.classList.remove('hidden')
+    logoutBtn.classList.remove('hidden')
+
     userName.textContent = existingUser.email || 'Repartidor'
     renderOrders('pendiente')
   }
@@ -22,9 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   // 🔐 LOGIN
   // =========================
-  const loginForm = document.getElementById('loginForm')
-
-  loginForm.addEventListener('submit', async (e) => {
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault()
 
     const email = document.getElementById('loginEmail').value
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginSection.classList.add('hidden')
         mainSection.classList.remove('hidden')
+        logoutBtn.classList.remove('hidden')
 
         userName.textContent = user.email
 
@@ -47,22 +49,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       console.error(error)
-      alert('Error en login (backend caído seguramente 😅)')
+      alert('Error en login')
     }
   })
 
   // =========================
   // 📝 REGISTER
   // =========================
-  const registerForm = document.getElementById('registerForm')
-
-  registerForm.addEventListener('submit', async (e) => {
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault()
 
     const email = document.getElementById('registerEmail').value
     const password = document.getElementById('registerPassword').value
 
-    // 🔥 FIX: rol fijo (ya no existe en HTML)
     const role = "repartidor"
 
     try {
@@ -73,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginSection.classList.add('hidden')
         mainSection.classList.remove('hidden')
+        logoutBtn.classList.remove('hidden')
 
         userName.textContent = data.email
 
@@ -82,24 +82,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       console.error(error)
-      alert('Error en registro (backend caído seguramente 😅)')
+      alert('Error en registro')
     }
   })
 
   // =========================
   // 🚪 LOGOUT
   // =========================
-  const logoutBtn = document.getElementById('logoutBtn')
-
   logoutBtn.addEventListener('click', () => {
     clearSession()
 
     mainSection.classList.add('hidden')
     loginSection.classList.remove('hidden')
+    logoutBtn.classList.add('hidden')
   })
 
   // =========================
-  // 📂 TABS (PEDIDOS)
+  // 📂 TABS
   // =========================
   const pendingTab = document.getElementById('pendingTab')
   const acceptedTab = document.getElementById('acceptedTab')
@@ -115,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 
   // =========================
-  // 🔁 TABS (LOGIN / REGISTER)
+  // 🔁 LOGIN / REGISTER TABS
   // =========================
   const authTabs = document.querySelectorAll('.tabs .tab')
   const forms = document.querySelectorAll('.form')
