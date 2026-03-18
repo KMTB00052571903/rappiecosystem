@@ -5,6 +5,7 @@
     "rootDir": "./src",
     "outDir": "dist",
     "esModuleInterop": true,
+    "noEmitOnError": false,  // Se adiciono esta línea
     "strict": true,
     "skipLibCheck": true
   },
