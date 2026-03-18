@@ -36,32 +36,45 @@
         </div>
 
         <!-- LOGIN -->
-        <form id="loginForm" class="form active">
-          <label>Email
-            <input type="email" id="loginEmail" required />
-          </label>
+       <section id="loginSection" class="section">
+  <div class="card auth-card">
 
-          <label>Contraseña
-            <input type="password" id="loginPassword" required />
-          </label>
+    <h2>Bienvenido</h2>
+    <p>Inicia sesión o regístrate</p>
 
-          <button type="submit" class="btn primary">Entrar</button>
-        </form>
+    <div class="tabs">
+      <button class="tab active" data-tab="login">Iniciar Sesión</button>
+      <button class="tab" data-tab="register">Registrarse</button>
+    </div>
 
-        <!-- REGISTER -->
-        <form id="registerForm" class="form">
-          <label>Email
-            <input type="email" id="registerEmail" required />
-          </label>
+    <!-- LOGIN -->
+    <form id="loginForm" class="form active">
+      <label>Email
+        <input type="email" id="loginEmail" required />
+      </label>
 
-          <label>Contraseña
-            <input type="password" id="registerPassword" required />
-          </label>
+      <label>Contraseña
+        <input type="password" id="loginPassword" required />
+      </label>
 
-          <button type="submit" class="btn primary">Registrarse</button>
-        </form>
-      </div>
-    </section>
+      <button type="submit" class="btn primary">Entrar</button>
+    </form>
+
+    <!-- REGISTER -->
+    <form id="registerForm" class="form">
+      <label>Email
+        <input type="email" id="registerEmail" required />
+      </label>
+
+      <label>Contraseña
+        <input type="password" id="registerPassword" required />
+      </label>
+
+      <button type="submit" class="btn primary">Registrarse</button>
+    </form>
+
+  </div>
+</section>
 
     <!-- MAIN APP -->
     <section id="mainSection" class="section hidden">

@@ -147,3 +147,67 @@ body {
 .hidden {
   display: none !important;
 }
+
+
+/* Card centrada */
+.auth-card {
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+/* Inputs */
+.form label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.form input {
+  margin-top: 5px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+/* Tabs estilo delivery */
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+  background: #eee;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #ff3b30; /* rojo consumer */
+  color: white;
+}
+
+/* Botón */
+.btn.primary {
+  background: #ff3b30;
+  color: white;
+  border-radius: 20px;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Forms */
+.form {
+  display: none;
+}
+
+.form.active {
+  display: block;
+}
