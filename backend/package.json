@@ -4,7 +4,7 @@
   "main": "dist/app.js",
   "scripts": {
     "dev": "nodemon --exec ts-node src/app.ts",
-    "build": "tsc"
+     "build": "echo 'Running TypeScript compiler...' && npx tsc --version && npx tsc"
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
