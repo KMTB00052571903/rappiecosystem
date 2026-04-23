@@ -1,81 +1,69 @@
-const API_URL = "https://rappiecosystem-oopf.vercel.app/api";
+const API_URL = 'https://rappiecosystem-oopf.vercel.app/api'
 
-// =========================
-// 🔐 AUTH
-// =========================
+function getHeaders() {
+  const token = localStorage.getItem('token')
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  }
+}
 
+// AUTH
 export async function loginUser(email, password) {
-  try {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.message);
-
-    localStorage.setItem("token", data.session?.access_token);
-
-    return data.user;
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    return null;
-  }
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
+  if (data.session?.access_token) localStorage.setItem('token', data.session.access_token)
+  return data
 }
 
-// 🔥 ESTA FUNCIÓN FALTABA
-export async function registerUser({ email, password, role }) {
-  try {
-    const res = await fetch(`${API_URL}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, role }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.message);
-
-    // opcional: guardar token si backend lo devuelve
-    if (data.session?.access_token) {
-      localStorage.setItem("token", data.session.access_token);
-    }
-
-    return data.user;
-  } catch (err) {
-    console.error("REGISTER ERROR:", err);
-
-    // 🔥 fallback para que funcione sin backend
-    return {
-      email,
-      role,
-    };
-  }
+export async function registerUser({ email, password }) {
+  const res = await fetch(`${API_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, role: 'delivery' }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
+  return data
 }
 
-// =========================
-// 🧾 ORDERS (FAKE POR AHORA)
-// =========================
+// ORDERS
+export async function fetchAvailableOrders() {
+  const res = await fetch(`${API_URL}/orders?status=available`, { headers: getHeaders() })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
+  return data
+}
 
-export async function fetchOrders() {
-  return [
-    {
-      id: 1,
-      estado: "pendiente",
-      storeName: "Restaurante Demo",
-      customerName: "Cliente Test",
-      customerPhone: "123456",
-      customerAddress: "Calle 123",
-      products: [{ name: "Pizza", quantity: 1 }],
-      total: 25000,
-      createdAt: new Date().toISOString(),
-    },
-  ];
+export async function fetchMyDeliveries(deliveryId) {
+  const res = await fetch(`${API_URL}/orders?deliveryId=${deliveryId}`, { headers: getHeaders() })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
+  return data
 }
 
 export async function acceptOrder(orderId) {
-  console.log("Pedido aceptado:", orderId);
-  return true;
+  const res = await fetch(`${API_URL}/orders/${orderId}/accept`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
+  return data
+}
+
+export async function updatePosition(orderId, lat, lng) {
+  const res = await fetch(`${API_URL}/orders/${orderId}/position`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ lat, lng }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
+  return data  // { status, arrived }
 }

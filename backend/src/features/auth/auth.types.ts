@@ -10,6 +10,7 @@ export interface CreateUserDTO {
   role: UserRole;
   name?: string | null;
   address?: string | null;
+  storeName?: string | null;
 }
 
 export interface AuthenticateUserDTO {

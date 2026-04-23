@@ -2,6 +2,7 @@ import { Router } from 'express'
 import {
   createStoreController,
   deleteStoreController,
+  getMyStoreController,
   getStoreByIdController,
   getStoresController,
   updateStoreController,
@@ -10,11 +11,12 @@ import { authMiddleware } from '../../middlewares/authMiddleware'
 
 export const router = Router()
 
-// 🔓 Públicas
+// Public
 router.get('/', getStoresController)
+router.get('/me', authMiddleware, getMyStoreController)
 router.get('/:id', getStoreByIdController)
 
-// 🔐 Protegidas
+// Protected
 router.post('/', authMiddleware, createStoreController)
 router.patch('/:id', authMiddleware, updateStoreController)
 router.delete('/:id', authMiddleware, deleteStoreController)

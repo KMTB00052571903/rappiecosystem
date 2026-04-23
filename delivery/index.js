@@ -8,135 +8,88 @@ document.addEventListener('DOMContentLoaded', () => {
   const userName = document.getElementById('userName')
   const logoutBtn = document.getElementById('logoutBtn')
 
-  // =========================
-  // 🔁 AUTO LOGIN
-  // =========================
   const existingUser = getSession()
-
   if (existingUser) {
-    loginSection.classList.add('hidden')
-    mainSection.classList.remove('hidden')
-    logoutBtn.classList.remove('hidden')
-
-    userName.textContent = existingUser.email || 'Repartidor'
-    renderOrders('pendiente')
+    showMain(existingUser)
+    renderOrders('pending')
   }
 
-  // =========================
-  // 🔐 LOGIN
-  // =========================
+  // LOGIN
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault()
-
     const email = document.getElementById('loginEmail').value
     const password = document.getElementById('loginPassword').value
-
     try {
-      const user = await loginUser(email, password)
-
-      if (user) {
-        setSession(user)
-
-        loginSection.classList.add('hidden')
-        mainSection.classList.remove('hidden')
-        logoutBtn.classList.remove('hidden')
-
-        userName.textContent = user.email
-
-        renderOrders('pendiente')
+      const data = await loginUser(email, password)
+      if (data?.user) {
+        setSession(data.user)
+        showMain(data.user)
+        renderOrders('pending')
       } else {
         alert('Error al iniciar sesión')
       }
-    } catch (error) {
-      console.error(error)
-      alert('Error en login')
+    } catch (err) {
+      alert('Error: ' + err.message)
     }
   })
 
-  // =========================
-  // 📝 REGISTER
-  // =========================
+  // REGISTER (role always delivery)
   document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault()
-
     const email = document.getElementById('registerEmail').value
     const password = document.getElementById('registerPassword').value
-
-    const role = "repartidor"
-
     try {
-      const data = await registerUser({ email, password, role })
-
-      if (data) {
-        setSession(data)
-
-        loginSection.classList.add('hidden')
-        mainSection.classList.remove('hidden')
-        logoutBtn.classList.remove('hidden')
-
-        userName.textContent = data.email
-
-        renderOrders('pendiente')
-      } else {
-        alert('Error en registro')
+      await registerUser({ email, password })
+      // Auto login after register
+      const data = await loginUser(email, password)
+      if (data?.user) {
+        setSession(data.user)
+        showMain(data.user)
+        renderOrders('pending')
       }
-    } catch (error) {
-      console.error(error)
-      alert('Error en registro')
+    } catch (err) {
+      alert('Error en registro: ' + err.message)
     }
   })
 
-  // =========================
-  // 🚪 LOGOUT
-  // =========================
+  // LOGOUT
   logoutBtn.addEventListener('click', () => {
     clearSession()
-
     mainSection.classList.add('hidden')
     loginSection.classList.remove('hidden')
     logoutBtn.classList.add('hidden')
   })
 
-  // =========================
-  // 📂 TABS
-  // =========================
-  const pendingTab = document.getElementById('pendingTab')
-  const acceptedTab = document.getElementById('acceptedTab')
-
-  pendingTab.addEventListener('click', () => {
-    setActiveTab(pendingTab, acceptedTab)
-    renderOrders('pendiente')
+  // TABS
+  document.getElementById('pendingTab').addEventListener('click', () => {
+    setActiveTab(document.getElementById('pendingTab'), document.getElementById('acceptedTab'))
+    renderOrders('pending')
   })
 
-  acceptedTab.addEventListener('click', () => {
-    setActiveTab(acceptedTab, pendingTab)
-    renderOrders('aceptado')
+  document.getElementById('acceptedTab').addEventListener('click', () => {
+    setActiveTab(document.getElementById('acceptedTab'), document.getElementById('pendingTab'))
+    renderOrders('accepted')
   })
 
-  // =========================
-  // 🔁 LOGIN / REGISTER TABS
-  // =========================
-  const authTabs = document.querySelectorAll('.tabs .tab')
-  const forms = document.querySelectorAll('.form')
-
-  authTabs.forEach((tab) => {
+  // Auth tabs
+  document.querySelectorAll('.tabs .tab[data-tab]').forEach(tab => {
     tab.addEventListener('click', () => {
-      authTabs.forEach((t) => t.classList.remove('active'))
-      forms.forEach((f) => f.classList.remove('active'))
-
+      document.querySelectorAll('.tabs .tab[data-tab]').forEach(t => t.classList.remove('active'))
+      document.querySelectorAll('.form').forEach(f => f.classList.remove('active'))
       tab.classList.add('active')
-
-      const target = tab.dataset.tab
-      const form = document.getElementById(target + 'Form')
-
+      const form = document.getElementById(tab.dataset.tab + 'Form')
       if (form) form.classList.add('active')
     })
   })
+
+  function showMain(user) {
+    loginSection.classList.add('hidden')
+    mainSection.classList.remove('hidden')
+    logoutBtn.classList.remove('hidden')
+    userName.textContent = user.email || user.user_metadata?.email || 'Repartidor'
+  }
 })
 
-// =========================
-// 🔁 UI TABS
-// =========================
 function setActiveTab(active, inactive) {
   active.classList.add('active')
   inactive.classList.remove('active')

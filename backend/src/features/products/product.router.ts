@@ -10,20 +10,11 @@ import { authMiddleware } from '../../middlewares/authMiddleware';
 
 export const router = Router();
 
-// 🔒 Todas las rutas protegidas
-router.use(authMiddleware);
-
-// 📦 GET ALL PRODUCTS
+// Public: consumers browse products without logging in
 router.get('/', getProductsController);
-
-// 📦 GET PRODUCT BY ID
 router.get('/:id', getProductByIdController);
 
-// 📦 CREATE PRODUCT
-router.post('/', createProductController);
-
-// 📦 UPDATE PRODUCT
-router.patch('/:id', updateProductController);
-
-// 📦 DELETE PRODUCT
-router.delete('/:id', deleteProductController);
+// Protected: only store owners manage products
+router.post('/', authMiddleware, createProductController);
+router.patch('/:id', authMiddleware, updateProductController);
+router.delete('/:id', authMiddleware, deleteProductController);

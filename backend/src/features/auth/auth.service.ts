@@ -1,11 +1,7 @@
-import { AuthenticateUserDTO, CreateUserDTO } from './auth.types';
+import { AuthenticateUserDTO, CreateUserDTO, UserRole } from './auth.types';
 import Boom from '@hapi/boom';
 import { supabase } from '../../config/supabase';
-import {
-  AuthResponse,
-  AuthTokenResponsePassword,
-  UserResponse,
-} from '@supabase/supabase-js';
+import { AuthResponse, AuthTokenResponsePassword } from '@supabase/supabase-js';
 
 export const authenticateUserService = async (
   credentials: AuthenticateUserDTO
@@ -39,6 +35,19 @@ export const createUserService = async (
 
   if (signUpResponse.error) {
     throw Boom.badRequest(signUpResponse.error.message);
+  }
+
+  // Auto-create store when role is store
+  if (user.role === UserRole.STORE && user.storeName && signUpResponse.data.user) {
+    const { error } = await supabase.from('stores').insert([{
+      name: user.storeName,
+      userId: signUpResponse.data.user.id,
+      isOpen: false,
+    }]);
+
+    if (error) {
+      console.error('Failed to create store:', error.message);
+    }
   }
 
   return signUpResponse.data;

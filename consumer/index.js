@@ -1,7 +1,7 @@
-import { loginUser, registerUser } from './services/api.js'
-import { renderStores } from './pages/Stores.js'
-import { renderOrders } from './pages/Orders.js'
-import { clearSession, setSession, getSession } from './context/session.js'
+import { loginUser, registerUser } from './src/services/api.js'
+import { renderStores } from './src/pages/Stores.js'
+import { renderOrders } from './src/pages/Orders.js'
+import { clearSession, setSession, getSession } from './src/context/session.js'
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginSection = document.getElementById('loginSection')
@@ -9,132 +9,103 @@ document.addEventListener('DOMContentLoaded', () => {
   const userDisplay = document.getElementById('userDisplay')
   const logoutBtn = document.getElementById('logoutBtn')
 
-  // =========================
-  // 🔁 AUTO LOGIN
-  // =========================
   const existingUser = getSession()
-
   if (existingUser) {
-    loginSection.classList.add('hidden')
-    mainSection.classList.remove('hidden')
-    logoutBtn.classList.remove('hidden')
-
-    userDisplay.textContent = existingUser.email
+    showMain(existingUser)
     renderStores()
   }
 
-  // =========================
-  // 🔐 LOGIN
-  // =========================
+  // LOGIN
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault()
-
     const email = document.getElementById('loginEmail').value
     const password = document.getElementById('loginPassword').value
-
-    const data = await loginUser(email, password)
-
-    if (data && data.user) {
-      setSession(data.user)
-
-      loginSection.classList.add('hidden')
-      mainSection.classList.remove('hidden')
-      logoutBtn.classList.remove('hidden')
-
-      userDisplay.textContent = data.user.email
-
-      renderStores()
-    } else {
-      alert('Error al iniciar sesión')
+    try {
+      const data = await loginUser(email, password)
+      if (data?.user) {
+        setSession(data.user)
+        showMain(data.user)
+        renderStores()
+      } else {
+        alert('Error al iniciar sesión')
+      }
+    } catch (err) {
+      alert('Error: ' + err.message)
     }
   })
 
-  // =========================
-  // 📝 REGISTER
-  // =========================
+  // REGISTER (role always consumer)
   document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault()
-
+    const name = document.getElementById('registerName').value
     const email = document.getElementById('registerEmail').value
     const password = document.getElementById('registerPassword').value
-
-    // 🔥 rol fijo
-    const role = "user"
-
-    const data = await registerUser({ email, password, role })
-
-    if (data && data.user) {
-      setSession(data.user)
-
-      loginSection.classList.add('hidden')
-      mainSection.classList.remove('hidden')
-      logoutBtn.classList.remove('hidden')
-
-      userDisplay.textContent = data.user.email
-
-      renderStores()
-    } else {
-      alert('Error en registro')
+    try {
+      const data = await registerUser({ email, password, role: 'consumer', name })
+      if (data?.user) {
+        // After register, log in to get session token
+        const loginData = await loginUser(email, password)
+        if (loginData?.user) {
+          setSession(loginData.user)
+          showMain(loginData.user)
+          renderStores()
+        }
+      } else {
+        alert('Registro exitoso. Inicia sesión.')
+      }
+    } catch (err) {
+      alert('Error en registro: ' + err.message)
     }
   })
 
-  // =========================
-  // 🚪 LOGOUT
-  // =========================
+  // LOGOUT
   logoutBtn.addEventListener('click', () => {
     clearSession()
-
     mainSection.classList.add('hidden')
     loginSection.classList.remove('hidden')
     logoutBtn.classList.add('hidden')
   })
 
-  // =========================
-  // 📂 TABS APP
-  // =========================
+  // TABS
   document.getElementById('storesTab').addEventListener('click', () => {
     renderStores()
-    toggleTab('storesSection')
+    toggleContent('storesSection')
+    setActiveNavTab('storesTab')
   })
 
   document.getElementById('ordersTab').addEventListener('click', () => {
     renderOrders()
-    toggleTab('myOrdersSection')
+    toggleContent('myOrdersSection')
+    setActiveNavTab('ordersTab')
   })
 
-  // =========================
-  // 🔁 TABS LOGIN / REGISTER
-  // =========================
-  const authTabs = document.querySelectorAll('.tabs .tab')
-  const forms = document.querySelectorAll('.form')
+  document.getElementById('refreshStoresBtn').addEventListener('click', renderStores)
+  document.getElementById('refreshOrdersBtn').addEventListener('click', renderOrders)
 
-  authTabs.forEach(tab => {
+  // Auth tabs (login / register)
+  document.querySelectorAll('.tabs .tab[data-tab]').forEach(tab => {
     tab.addEventListener('click', () => {
-      authTabs.forEach(t => t.classList.remove('active'))
-      forms.forEach(f => f.classList.remove('active'))
-
+      document.querySelectorAll('.tabs .tab[data-tab]').forEach(t => t.classList.remove('active'))
+      document.querySelectorAll('.form').forEach(f => f.classList.remove('active'))
       tab.classList.add('active')
-
-      const target = tab.dataset.tab
-      document.getElementById(target + 'Form').classList.add('active')
+      document.getElementById(tab.dataset.tab + 'Form').classList.add('active')
     })
   })
+
+  function showMain(user) {
+    loginSection.classList.add('hidden')
+    mainSection.classList.remove('hidden')
+    logoutBtn.classList.remove('hidden')
+    userDisplay.textContent = user.email || user.user_metadata?.name || 'Usuario'
+  }
 })
 
-// =========================
-// 🔁 CAMBIO DE VISTA
-// =========================
-function toggleTab(sectionId) {
-  document.querySelectorAll('.content').forEach(sec => sec.classList.add('hidden'))
+function toggleContent(sectionId) {
+  document.querySelectorAll('.content').forEach(s => s.classList.add('hidden'))
   document.getElementById(sectionId).classList.remove('hidden')
+}
 
-  document.querySelectorAll('#storesTab, #ordersTab').forEach(tab => tab.classList.remove('active'))
-
-  if (sectionId === 'storesSection') {
-    document.getElementById('storesTab').classList.add('active')
-  }
-
-  if (sectionId === 'myOrdersSection') {
-    document.getElementById('ordersTab').classList.add('active')
-  }
+function setActiveNavTab(tabId) {
+  document.querySelectorAll('#storesTab, #ordersTab').forEach(t => t.classList.remove('active'))
+  document.getElementById(tabId).classList.add('active')
 }

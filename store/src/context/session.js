@@ -1,12 +1,8 @@
-let currentStore = JSON.parse(localStorage.getItem('store_user')) || null
-
-// =========================
-// 🏪 SESSION STORE
-// =========================
+let currentStore = JSON.parse(localStorage.getItem('store_session')) || null
 
 export function setSession(store) {
   currentStore = store
-  localStorage.setItem('store_user', JSON.stringify(store))
+  localStorage.setItem('store_session', JSON.stringify(store))
 }
 
 export function getSession() {
@@ -15,13 +11,9 @@ export function getSession() {
 
 export function clearSession() {
   currentStore = null
-  localStorage.removeItem('store_user')
+  localStorage.removeItem('store_session')
   localStorage.removeItem('token')
 }
-
-// =========================
-// 🔁 AUTO LOGIN
-// =========================
 
 export function isAuthenticated() {
   return !!currentStore

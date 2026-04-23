@@ -3,65 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mini Rappi - Ordenar Comida</title>
+  <title>Mini Rappi - Consumidor</title>
   <link rel="stylesheet" href="styles.css" />
-
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    /* Map modals */
+    .map-modal { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; display:flex; align-items:center; justify-content:center; }
+    .map-modal.hidden { display:none; }
+    .map-box { background:#fff; border-radius:12px; padding:20px; width:90%; max-width:600px; }
+    .map-box h3 { margin-bottom:10px; }
+    #orderMap, #trackingMap { height:350px; border-radius:8px; margin-bottom:12px; }
+    .map-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    #selectedLocationText { font-size:12px; color:#555; }
+    .badge { padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600; }
+    .badge-created { background:#e3f2fd; color:#1565c0; }
+    .badge-delivery { background:#fff3e0; color:#e65100; }
+    .badge-done { background:#e8f5e9; color:#2e7d32; }
+    .btn-track { margin-top:8px; padding:6px 14px; background:#0096c7; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+    .delivered-msg { color:#2e7d32; font-weight:600; margin-top:6px; }
+    .store-status.open { color:#2e7d32; }
+    .store-status.closed { color:#999; }
+    .order-card { background:#f9f9f9; border-radius:10px; padding:14px; margin-bottom:12px; border-left:4px solid #0096c7; }
+    .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .order-date { font-size:12px; color:#888; }
+    .in-cart-badge { font-size:11px; color:#e65100; }
+    #deliveredToast { position:fixed; top:20px; right:20px; background:#2e7d32; color:#fff; padding:14px 20px; border-radius:10px; z-index:2000; box-shadow:0 4px 12px rgba(0,0,0,.2); }
+    #deliveredToast.hidden { display:none; }
+    .loading { color:#888; }
+    .error { color:#c62828; }
+    .empty-cart { color:#888; font-style:italic; }
+    .cart-item { display:flex; justify-content:space-between; padding:4px 0; font-size:13px; }
+    .cart-total { border-top:1px solid #eee; padding-top:8px; margin-top:8px; font-size:14px; }
+  </style>
 </head>
-
 <body>
   <div class="container">
 
-    <!-- HEADER -->
     <header class="header">
       <div>
         <h1 class="logo">🛒 Mini Rappi</h1>
         <p class="subtitle">Ordenar Comida</p>
       </div>
-
-      <!-- 🔥 oculto -->
       <button id="logoutBtn" class="btn hidden">Cerrar Sesión</button>
     </header>
 
-    <!-- LOGIN -->
+    <!-- LOGIN / REGISTER -->
     <section id="loginSection" class="section">
       <div class="card auth-card">
-
         <h2>Bienvenido</h2>
-        <p>Inicia sesión o regístrate</p>
+        <p>Inicia sesión o regístrate como consumidor</p>
 
         <div class="tabs">
           <button class="tab active" data-tab="login">Iniciar Sesión</button>
           <button class="tab" data-tab="register">Registrarse</button>
         </div>
 
-        <!-- LOGIN -->
         <form id="loginForm" class="form active">
-          <label>Email
-            <input type="email" id="loginEmail" required />
-          </label>
-
-          <label>Contraseña
-            <input type="password" id="loginPassword" required />
-          </label>
-
+          <label>Email<input type="email" id="loginEmail" required /></label>
+          <label>Contraseña<input type="password" id="loginPassword" required /></label>
           <button type="submit" class="btn primary">Entrar</button>
         </form>
 
-        <!-- REGISTER -->
         <form id="registerForm" class="form">
-          <label>Email
-            <input type="email" id="registerEmail" required />
-          </label>
-
-          <label>Contraseña
-            <input type="password" id="registerPassword" required />
-          </label>
-
+          <label>Nombre<input type="text" id="registerName" required /></label>
+          <label>Email<input type="email" id="registerEmail" required /></label>
+          <label>Contraseña<input type="password" id="registerPassword" required /></label>
           <button type="submit" class="btn primary">Registrarse</button>
         </form>
-
       </div>
     </section>
 
@@ -73,26 +85,17 @@
         <p>¿Qué te gustaría comer hoy?</p>
       </div>
 
-      <!-- NAV -->
       <nav class="tabs">
-        <button id="storesTab" class="tab active">
-          <i class="ri-store-2-line"></i> Restaurantes
-        </button>
-
-        <button id="ordersTab" class="tab">
-          <i class="ri-shopping-bag-line"></i> Mis Pedidos
-        </button>
+        <button id="storesTab" class="tab active"><i class="ri-store-2-line"></i> Restaurantes</button>
+        <button id="ordersTab" class="tab"><i class="ri-shopping-bag-line"></i> Mis Pedidos</button>
       </nav>
 
       <!-- STORES -->
       <section id="storesSection" class="content active">
         <header class="section-header">
           <h2><i class="ri-restaurant-line"></i> Restaurantes</h2>
-          <button id="refreshStoresBtn" class="btn secondary">
-            <i class="ri-refresh-line"></i> Actualizar
-          </button>
+          <button id="refreshStoresBtn" class="btn secondary"><i class="ri-refresh-line"></i> Actualizar</button>
         </header>
-
         <div id="storesList" class="grid"></div>
       </section>
 
@@ -102,9 +105,7 @@
           <button id="backToStores" class="btn back">← Volver</button>
           <h2 id="storeName">Productos</h2>
         </header>
-
         <div id="productsList" class="grid"></div>
-
         <aside class="sidebar">
           <h3><i class="ri-shopping-cart-line"></i> Carrito</h3>
           <div id="carritoContainer"></div>
@@ -115,16 +116,43 @@
       <section id="myOrdersSection" class="content hidden">
         <header class="section-header">
           <h2><i class="ri-shopping-bag-line"></i> Mis Pedidos</h2>
-          <button id="refreshOrdersBtn" class="btn secondary">
-            <i class="ri-refresh-line"></i> Actualizar
-          </button>
+          <button id="refreshOrdersBtn" class="btn secondary"><i class="ri-refresh-line"></i> Actualizar</button>
         </header>
-
         <div id="myOrdersList" class="grid"></div>
       </section>
 
     </section>
+  </div>
 
+  <!-- MAP MODAL: Select delivery location when creating order -->
+  <div id="orderMapModal" class="map-modal hidden">
+    <div class="map-box">
+      <h3>📍 Selecciona tu punto de entrega</h3>
+      <p style="font-size:13px;color:#555;margin-bottom:8px;">Haz click en el mapa para marcar dónde quieres recibir tu pedido.</p>
+      <div id="orderMap"></div>
+      <div class="map-actions">
+        <span id="selectedLocationText">Sin ubicación seleccionada</span>
+        <button id="cancelOrderBtn" class="btn secondary">Cancelar</button>
+        <button id="confirmOrderBtn" class="btn primary" disabled>Confirmar Pedido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP MODAL: Real-time delivery tracking -->
+  <div id="trackingModal" class="map-modal hidden">
+    <div class="map-box">
+      <h3>🛵 Seguimiento en tiempo real</h3>
+      <div id="trackingMap"></div>
+      <div class="map-actions">
+        <span style="font-size:13px;color:#555;">📍 Tu ubicación &nbsp; 🛵 Repartidor</span>
+        <button id="closeTrackingBtn" class="btn secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delivered notification toast -->
+  <div id="deliveredToast" class="hidden">
+    🎉 ¡Tu repartidor llegó! El pedido fue entregado.
   </div>
 
   <script type="module" src="index.js"></script>

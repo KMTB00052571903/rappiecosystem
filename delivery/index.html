@@ -5,22 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini Rappi - Repartidor</title>
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- Fuentes e iconos -->
-  <link href="https://fonts.googleapis.com/css2?family=TASA+Explorer:wght@400;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    .badge { padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600; }
+    .badge-created { background:#e3f2fd; color:#1565c0; }
+    .badge-delivery { background:#fff3e0; color:#e65100; }
+    .badge-done { background:#e8f5e9; color:#2e7d32; }
+    .order-card { background:#f9f9f9; border-radius:10px; padding:14px; margin-bottom:12px; border-left:4px solid #0096c7; }
+    .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .order-date { font-size:11px; color:#888; }
+    .btn-accept { margin-top:10px; width:100%; }
+    #deliveryMapSection { padding:12px; }
+    #deliveryMap { height:420px; border-radius:10px; border:2px solid #0096c7; margin-bottom:12px; }
+    .map-controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+    .keys-hint { font-size:12px; color:#555; background:#f0f7ff; padding:8px 12px; border-radius:6px; }
+    #deliveredBanner { background:#2e7d32; color:#fff; padding:16px; border-radius:10px; text-align:center; font-size:16px; font-weight:600; margin-bottom:12px; }
+    #deliveredBanner.hidden { display:none; }
+    .error { color:#c62828; }
+  </style>
 </head>
 <body>
   <div class="container">
 
-    <!-- Header -->
     <header class="header">
       <div class="header-left">
         <h1 class="logo">🚚 Mini Rappi</h1>
-        <p class="subtitle">Gestionar Pedidos</p>
+        <p class="subtitle">Repartidor</p>
       </div>
-
-      <!-- 🔥 oculto por defecto -->
       <button id="logoutBtn" class="btn secondary hidden">Cerrar Sesión</button>
     </header>
 
@@ -35,35 +50,21 @@
           <button class="tab" data-tab="register">Registrarse</button>
         </div>
 
-        <!-- LOGIN -->
         <form id="loginForm" class="form active">
-          <label>Email
-            <input type="email" id="loginEmail" required />
-          </label>
-
-          <label>Contraseña
-            <input type="password" id="loginPassword" required />
-          </label>
-
+          <label>Email<input type="email" id="loginEmail" required /></label>
+          <label>Contraseña<input type="password" id="loginPassword" required /></label>
           <button type="submit" class="btn primary">Entrar</button>
         </form>
 
-        <!-- REGISTER -->
         <form id="registerForm" class="form">
-          <label>Email
-            <input type="email" id="registerEmail" required />
-          </label>
-
-          <label>Contraseña
-            <input type="password" id="registerPassword" required />
-          </label>
-
+          <label>Email<input type="email" id="registerEmail" required /></label>
+          <label>Contraseña<input type="password" id="registerPassword" required /></label>
           <button type="submit" class="btn primary">Registrarse</button>
         </form>
       </div>
     </section>
 
-    <!-- MAIN -->
+    <!-- MAIN: Orders list -->
     <section id="mainSection" class="section hidden">
 
       <div class="user-info">
@@ -71,39 +72,48 @@
         <p>Gestiona tus pedidos</p>
       </div>
 
-      <!-- ORDERS -->
-      <section id="ordersSection" class="content active">
-
+      <section id="ordersSection" class="content">
         <header class="section-header">
           <h2><i class="ri-shopping-bag-line"></i> Pedidos</h2>
         </header>
 
-        <!-- TABS -->
         <nav class="tabs">
-          <button id="pendingTab" class="tab active">Pendientes</button>
-          <button id="acceptedTab" class="tab">Aceptados</button>
+          <button id="pendingTab" class="tab active">Disponibles</button>
+          <button id="acceptedTab" class="tab">Mis entregas</button>
         </nav>
 
-        <!-- GRID -->
         <div id="ordersGrid" class="grid"></div>
 
-        <!-- LOADING -->
         <div id="loading" class="overlay hidden">
           <div class="spinner"></div>
-          <p>Cargando pedidos...</p>
+          <p>Cargando...</p>
         </div>
 
-        <!-- EMPTY -->
         <div id="noOrders" class="overlay hidden">
           <i class="ri-shopping-bag-line"></i>
           <h3>No hay pedidos disponibles</h3>
-          <p>Los pedidos aparecerán aquí</p>
+        </div>
+      </section>
+
+      <!-- MAP: Active delivery tracking -->
+      <section id="deliveryMapSection" class="content hidden">
+        <div class="map-controls">
+          <h3>🛵 Entregando — <span id="activeOrderInfo"></span></h3>
+          <button id="closeMapBtn" class="btn secondary">← Volver</button>
         </div>
 
+        <div id="deliveredBanner" class="hidden">
+          🎉 ¡Pedido entregado! Llegaste al destino.
+        </div>
+
+        <div class="keys-hint">
+          Usa las teclas <strong>↑ ↓ ← →</strong> para mover tu posición en el mapa
+        </div>
+
+        <div id="deliveryMap"></div>
       </section>
 
     </section>
-
   </div>
 
   <script type="module" src="index.js"></script>
