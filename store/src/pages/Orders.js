@@ -80,15 +80,12 @@ function subscribeRealtime(storeId) {
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   if (realtimeChannel) supabase.removeChannel(realtimeChannel)
 
+  // Use Broadcast (not Postgres Changes) on the store-specific channel.
+  // Delivery app broadcasts to store:${storeId} after every position PATCH.
   realtimeChannel = supabase
-    .channel('store-orders-' + storeId)
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'orders',
-      filter: `storeId=eq.${storeId}`,
-    }, (payload) => {
-      updateOrderBadge(payload.new.id, payload.new.status)
+    .channel(`store:${storeId}`)
+    .on('broadcast', { event: 'order-update' }, ({ payload }) => {
+      updateOrderBadge(payload.orderId, payload.status)
     })
     .subscribe()
 }

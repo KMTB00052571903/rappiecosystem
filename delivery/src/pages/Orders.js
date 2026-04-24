@@ -5,20 +5,25 @@ import { getSession } from '../context/session.js'
 const SUPABASE_URL = 'https://yusnextkfjdjrjbotitk.supabase.co'
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1c25leHRrZmpkanJqYm90aXRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDEyNzAsImV4cCI6MjA4OTE3NzI3MH0.GEHYjCrGQVYIKWgdRWIWu2DP83TdpnUNNIDQn8_N7b8'
 
-const STEP = 0.00005  // ~5 metros
+const STEP = 0.00005  // ~5 meters per key press
 
 let deliveryMap = null
 let deliveryMarker = null
-let broadcastChannel = null
+let supabaseClient = null
+let orderChannel = null   // channel for consumer tracking: order:${orderId}
+let storeChannel = null   // channel for store status: store:${storeId}
 let activeOrderId = null
+let activeStoreId = null
 let isDelivered = false
 
-// Throttle state
+// Throttle refs (pendingPosition pattern from requirements)
 let throttleTimer = null
 let pendingLat = null
 let pendingLng = null
 let currentLat = null
 let currentLng = null
+
+// ─── render orders list ───────────────────────────────────────────────────────
 
 export async function renderOrders(tab = 'pending') {
   const ordersGrid = document.getElementById('ordersGrid')
@@ -26,40 +31,30 @@ export async function renderOrders(tab = 'pending') {
   const noOrders = document.getElementById('noOrders')
 
   const user = getSession()
-  if (!user) {
-    ordersGrid.innerHTML = '<p>Debes iniciar sesión</p>'
-    return
-  }
+  if (!user) { ordersGrid.innerHTML = '<p>Debes iniciar sesión</p>'; return }
 
   ordersGrid.innerHTML = ''
   loading.classList.remove('hidden')
   noOrders.classList.add('hidden')
 
   try {
-    let orders
-    if (tab === 'pending') {
-      orders = await fetchAvailableOrders()
-    } else {
-      orders = await fetchMyDeliveries(user.id)
-    }
+    const orders = tab === 'pending'
+      ? await fetchAvailableOrders()
+      : await fetchMyDeliveries(user.id)
 
     loading.classList.add('hidden')
     ordersGrid.innerHTML = ''
 
-    if (!orders || orders.length === 0) {
-      noOrders.classList.remove('hidden')
-      return
-    }
+    if (!orders || orders.length === 0) { noOrders.classList.remove('hidden'); return }
 
-    orders.forEach(order => {
-      const card = OrderCard(order, handleAccept)
-      ordersGrid.appendChild(card)
-    })
+    orders.forEach(order => ordersGrid.appendChild(OrderCard(order, handleAccept)))
   } catch (err) {
     loading.classList.add('hidden')
     ordersGrid.innerHTML = `<p class="error">Error: ${err.message}</p>`
   }
 }
+
+// ─── accept + open map ────────────────────────────────────────────────────────
 
 async function handleAccept(order) {
   try {
@@ -74,21 +69,21 @@ async function handleAccept(order) {
 function openDeliveryMap(order) {
   isDelivered = false
   activeOrderId = order.id
+  activeStoreId = order.storeId  // needed for store broadcast
 
-  // Parse destination
+  // Parse destination from GeoJSON
   let destLat = 4.711, destLng = -74.072
   if (order.destination?.coordinates) {
     destLng = order.destination.coordinates[0]
     destLat = order.destination.coordinates[1]
   }
 
-  // Show map section, hide orders
+  // Show map section
   document.getElementById('ordersSection').classList.add('hidden')
-  const mapSection = document.getElementById('deliveryMapSection')
-  mapSection.classList.remove('hidden')
+  document.getElementById('deliveryMapSection').classList.remove('hidden')
   document.getElementById('activeOrderInfo').textContent = `Pedido #${order.id.slice(0, 8)}`
 
-  // Init position near destination (start 0.001 deg away)
+  // Start slightly away from destination so movement is visible
   currentLat = destLat + 0.001
   currentLng = destLng
 
@@ -99,23 +94,27 @@ function openDeliveryMap(order) {
     attribution: '© OpenStreetMap'
   }).addTo(deliveryMap)
 
-  // Delivery marker
   deliveryMarker = window.L.marker([currentLat, currentLng], {
     icon: window.L.divIcon({ className: '', html: '🛵', iconSize: [30, 30] })
   }).addTo(deliveryMap).bindPopup('Tu posición').openPopup()
 
-  // Destination marker
   window.L.marker([destLat, destLng], {
     icon: window.L.divIcon({ className: '', html: '📍', iconSize: [30, 30] })
-  }).addTo(deliveryMap).bindPopup('Destino de entrega').openPopup()
+  }).addTo(deliveryMap).bindPopup('Destino de entrega')
 
-  // Subscribe to broadcast channel
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-  if (broadcastChannel) supabase.removeChannel(broadcastChannel)
-  broadcastChannel = supabase.channel(`order-${order.id}`)
-  broadcastChannel.subscribe()
+  // Subscribe to Supabase Broadcast channels (delivery is the sender)
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
-  // Start listening for arrow keys
+  if (orderChannel) supabaseClient.removeChannel(orderChannel)
+  orderChannel = supabaseClient.channel(`order:${order.id}`)
+  orderChannel.subscribe()  // delivery app needs to subscribe before it can send
+
+  if (storeChannel) supabaseClient.removeChannel(storeChannel)
+  if (activeStoreId) {
+    storeChannel = supabaseClient.channel(`store:${activeStoreId}`)
+    storeChannel.subscribe()
+  }
+
   window.addEventListener('keydown', handleKeyDown)
 
   document.getElementById('closeMapBtn').onclick = () => {
@@ -126,75 +125,93 @@ function openDeliveryMap(order) {
   }
 }
 
-function handleKeyDown(e) {
-  if (isDelivered) return
+// ─── keyboard movement ────────────────────────────────────────────────────────
 
-  let moved = false
+function handleKeyDown(e) {
+  if (isDelivered) return  // STOP movement once delivered
+
   switch (e.key) {
-    case 'ArrowUp':    currentLat += STEP; moved = true; break
-    case 'ArrowDown':  currentLat -= STEP; moved = true; break
-    case 'ArrowLeft':  currentLng -= STEP; moved = true; break
-    case 'ArrowRight': currentLng += STEP; moved = true; break
+    case 'ArrowUp':    currentLat += STEP; break
+    case 'ArrowDown':  currentLat -= STEP; break
+    case 'ArrowLeft':  currentLng -= STEP; break
+    case 'ArrowRight': currentLng += STEP; break
     default: return
   }
-
   e.preventDefault()
 
-  // Move marker immediately
+  // 1. Update local marker immediately (visual feedback)
   deliveryMarker.setLatLng([currentLat, currentLng])
   deliveryMap.panTo([currentLat, currentLng])
 
-  // Store pending position
+  // 2. Track most-recent pending position (pendingPosition ref pattern)
   pendingLat = currentLat
   pendingLng = currentLng
 
-  // Throttle: send PATCH at most once per second
+  // 3. Throttle: only one PATCH per second regardless of key frequency
   if (throttleTimer) return
-  throttleTimer = setTimeout(async () => {
-    const lat = pendingLat
-    const lng = pendingLng
-    throttleTimer = null
-
-    try {
-      const result = await updatePosition(activeOrderId, lat, lng)
-
-      // Broadcast position to consumers via Supabase
-      if (broadcastChannel) {
-        broadcastChannel.send({
-          type: 'broadcast',
-          event: 'position-update',
-          payload: { lat, lng, status: result.status },
-        })
-      }
-
-      if (result.arrived) {
-        isDelivered = true
-        window.removeEventListener('keydown', handleKeyDown)
-        document.getElementById('deliveredBanner').classList.remove('hidden')
-        setTimeout(() => {
-          cleanupMap()
-          document.getElementById('deliveryMapSection').classList.add('hidden')
-          document.getElementById('ordersSection').classList.remove('hidden')
-          renderOrders('accepted')
-        }, 3000)
-      }
-    } catch (err) {
-      console.error('Error updating position:', err.message)
-    }
-  }, 1000)
+  throttleTimer = setTimeout(sendPositionUpdate, 1000)
 }
+
+async function sendPositionUpdate() {
+  const lat = pendingLat
+  const lng = pendingLng
+  throttleTimer = null
+
+  try {
+    // PATCH → updates delivery_position in DB, runs ST_DWithin check
+    const result = await updatePosition(activeOrderId, lat, lng)
+
+    // After DB update: broadcast position to consumer via order channel
+    if (orderChannel) {
+      orderChannel.send({
+        type: 'broadcast',
+        event: 'position-update',
+        payload: { lat, lng, status: result.status },
+      })
+    }
+
+    // Also broadcast status update to store channel
+    if (storeChannel && activeStoreId) {
+      storeChannel.send({
+        type: 'broadcast',
+        event: 'order-update',
+        payload: { orderId: activeOrderId, status: result.status },
+      })
+    }
+
+    // Stop movement and show banner if delivered
+    if (result.arrived) {
+      isDelivered = true
+      window.removeEventListener('keydown', handleKeyDown)
+      document.getElementById('deliveredBanner').classList.remove('hidden')
+      setTimeout(() => {
+        cleanupMap()
+        document.getElementById('deliveryMapSection').classList.add('hidden')
+        document.getElementById('ordersSection').classList.remove('hidden')
+        renderOrders('accepted')
+      }, 3000)
+    }
+  } catch (err) {
+    console.error('Position update error:', err.message)
+  }
+}
+
+// ─── cleanup ──────────────────────────────────────────────────────────────────
 
 function cleanupMap() {
   window.removeEventListener('keydown', handleKeyDown)
   if (throttleTimer) { clearTimeout(throttleTimer); throttleTimer = null }
   if (deliveryMap) { deliveryMap.remove(); deliveryMap = null }
   deliveryMarker = null
-  if (broadcastChannel) {
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-    supabase.removeChannel(broadcastChannel)
-    broadcastChannel = null
+
+  if (supabaseClient) {
+    if (orderChannel) { supabaseClient.removeChannel(orderChannel); orderChannel = null }
+    if (storeChannel) { supabaseClient.removeChannel(storeChannel); storeChannel = null }
+    supabaseClient = null
   }
+
   activeOrderId = null
+  activeStoreId = null
   isDelivered = false
   document.getElementById('deliveredBanner').classList.add('hidden')
 }

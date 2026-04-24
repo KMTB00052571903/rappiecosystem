@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 import { supabase } from '../../config/supabase'
+import { pool } from '../../config/database'
 import { CreateOrderDTO, Order, OrderStatus, UpdatePositionDTO } from './order.types'
 
 export const getAvailableOrdersService = async (): Promise<Order[]> => {
@@ -58,22 +59,19 @@ export const getOrderByIdService = async (orderId: string): Promise<Order> => {
 }
 
 export const createOrderService = async (dto: CreateOrderDTO): Promise<Order> => {
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .insert([{
-      consumerId: dto.consumerId,
-      storeId: dto.storeId,
-      status: OrderStatus.CREATED,
-      destination: `POINT(${dto.destinationLng} ${dto.destinationLat})`,
-    }])
-    .select()
-    .single()
+  const { rows } = await pool.query<Order>(
+    `INSERT INTO orders ("consumerId", "storeId", status, destination)
+     VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($4, $5), 4326))
+     RETURNING *`,
+    [dto.consumerId, dto.storeId, OrderStatus.CREATED, dto.destinationLng, dto.destinationLat],
+  )
 
-  if (orderError || !order) throw Boom.badRequest(orderError?.message ?? 'Failed to create order')
+  const order = rows[0]
+  if (!order) throw Boom.badRequest('Failed to create order')
 
   if (dto.items.length > 0) {
     const orderItems = dto.items.map(item => ({
-      orderId: (order as Order).id,
+      orderId: order.id,
       productId: item.productId,
       quantity: item.quantity,
     }))
@@ -81,12 +79,12 @@ export const createOrderService = async (dto: CreateOrderDTO): Promise<Order> =>
     const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
 
     if (itemsError) {
-      await supabase.from('orders').delete().eq('id', (order as Order).id)
+      await supabase.from('orders').delete().eq('id', order.id)
       throw Boom.badRequest(itemsError.message)
     }
   }
 
-  return order as Order
+  return order
 }
 
 export const acceptOrderService = async (orderId: string, deliveryId: string): Promise<Order> => {
@@ -103,7 +101,10 @@ export const acceptOrderService = async (orderId: string, deliveryId: string): P
 }
 
 // Calls PostgreSQL RPC that does: update delivery_position + ST_DWithin check + status update
-export const updatePositionService = async (dto: UpdatePositionDTO): Promise<{ status: string; arrived: boolean }> => {
+export const updatePositionService = async (
+  dto: UpdatePositionDTO
+): Promise<{ status: string; arrived: boolean; storeId: string }> => {
+  // Step 1: update position in DB + check 5m proximity via PostGIS ST_DWithin
   const { data, error } = await supabase.rpc('update_order_position', {
     p_order_id: dto.orderId,
     p_lat: dto.lat,
@@ -112,6 +113,17 @@ export const updatePositionService = async (dto: UpdatePositionDTO): Promise<{ s
 
   if (error) throw Boom.badImplementation(error.message)
 
+  // Step 2: get storeId so the controller can broadcast to the store channel
+  const { data: orderRow } = await supabase
+    .from('orders')
+    .select('storeId')
+    .eq('id', dto.orderId)
+    .single()
+
   const status = data as string
-  return { status, arrived: status === OrderStatus.DELIVERED }
+  return {
+    status,
+    arrived: status === OrderStatus.DELIVERED,
+    storeId: (orderRow as { storeId: string } | null)?.storeId ?? '',
+  }
 }

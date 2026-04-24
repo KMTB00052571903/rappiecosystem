@@ -11,35 +11,51 @@ import {
   updatePositionService,
 } from './order.service'
 import { getUserFromRequest } from '../../middlewares/authMiddleware'
+import { supabase } from '../../config/supabase'
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Fire-and-forget server-side Supabase Broadcast.
+ * Returns a promise so callers can .catch() errors without blocking the response.
+ */
+function broadcastEvent(channelName: string, event: string, payload: object): Promise<void> {
+  return new Promise((resolve) => {
+    const channel = supabase.channel(channelName)
+    const timer = setTimeout(() => { supabase.removeChannel(channel); resolve() }, 3000)
+
+    channel.subscribe((status) => {
+      if (status !== 'SUBSCRIBED') return
+      channel
+        .send({ type: 'broadcast', event, payload })
+        .then(() => { clearTimeout(timer); supabase.removeChannel(channel); resolve() })
+        .catch(() => { clearTimeout(timer); supabase.removeChannel(channel); resolve() })
+    })
+  })
+}
+
+// ─── controllers ─────────────────────────────────────────────────────────────
 
 export const getOrdersController = async (req: Request, res: Response) => {
   const user = getUserFromRequest(req)
   const { storeId, deliveryId, status } = req.query
 
   if (status === 'available') {
-    const orders = await getAvailableOrdersService()
-    return res.json(orders)
+    return res.json(await getAvailableOrdersService())
   }
-
   if (storeId) {
-    const orders = await getOrdersByStoreService(String(storeId))
-    return res.json(orders)
+    return res.json(await getOrdersByStoreService(String(storeId)))
   }
-
   if (deliveryId) {
-    const orders = await getOrdersByDeliveryService(String(deliveryId))
-    return res.json(orders)
+    return res.json(await getOrdersByDeliveryService(String(deliveryId)))
   }
-
-  const orders = await getOrdersByConsumerService(user.id)
-  return res.json(orders)
+  return res.json(await getOrdersByConsumerService(user.id))
 }
 
 export const getOrderByIdController = async (req: Request, res: Response) => {
   const { id } = req.params
   if (!id) throw Boom.badRequest('Order ID is required')
-  const order = await getOrderByIdService(String(id))
-  return res.json(order)
+  return res.json(await getOrderByIdService(String(id)))
 }
 
 export const createOrderController = async (req: Request, res: Response) => {
@@ -70,7 +86,13 @@ export const acceptOrderController = async (req: Request, res: Response) => {
   const { id } = req.params
   if (!id) throw Boom.badRequest('Order ID is required')
   const order = await acceptOrderService(String(id), user.id)
-  return res.json(order)
+  res.json(order)
+  if (order.storeId) {
+    broadcastEvent(`store:${order.storeId}`, 'order-update', {
+      orderId: order.id,
+      status: order.status,
+    }).catch(console.error)
+  }
 }
 
 export const updatePositionController = async (req: Request, res: Response) => {
@@ -82,11 +104,24 @@ export const updatePositionController = async (req: Request, res: Response) => {
     throw Boom.badRequest('lat and lng are required')
   }
 
+  // 1. Update delivery_position in DB + ST_DWithin check
   const result = await updatePositionService({
     orderId: String(id),
     lat: Number(lat),
     lng: Number(lng),
   })
 
-  return res.json(result)
+  // 2. Respond immediately — don't block on broadcast
+  res.json({ status: result.status, arrived: result.arrived })
+
+  // 3. Fire-and-forget broadcasts after DB update (satisfies: update DB → broadcast)
+  const payload = { lat: Number(lat), lng: Number(lng), status: result.status }
+  broadcastEvent(`order:${id}`, 'position-update', payload).catch(console.error)
+
+  if (result.storeId) {
+    broadcastEvent(`store:${result.storeId}`, 'order-update', {
+      orderId: id,
+      status: result.status,
+    }).catch(console.error)
+  }
 }

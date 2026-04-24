@@ -1,8 +1,5 @@
-export enum OrderStatus {
-  CREATED = 'Creado',
-  IN_DELIVERY = 'En entrega',
-  DELIVERED = 'Entregado',
-}
+export { OrderStatus } from '../../enums/orderStatus.enum'
+import { OrderStatus } from '../../enums/orderStatus.enum'
 
 export interface Order {
   id: string

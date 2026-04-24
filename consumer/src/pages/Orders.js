@@ -68,7 +68,7 @@ function openTrackingModal(order) {
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   if (trackingChannel) supabase.removeChannel(trackingChannel)
 
-  trackingChannel = supabase.channel(`order-${order.id}`)
+  trackingChannel = supabase.channel(`order:${order.id}`)
   trackingChannel
     .on('broadcast', { event: 'position-update' }, ({ payload }) => {
       const { lat, lng, status } = payload
