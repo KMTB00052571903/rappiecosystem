@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 import { supabase } from '../../config/supabase'
-import { pool } from '../../config/database'
+import pool from '../../config/database'
 import { CreateOrderDTO, Order, OrderStatus, UpdatePositionDTO } from './order.types'
 
 export const getAvailableOrdersService = async (): Promise<Order[]> => {

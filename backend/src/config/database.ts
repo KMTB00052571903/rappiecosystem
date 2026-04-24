@@ -1,10 +1,20 @@
 import { Pool } from 'pg'
-import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER } from './index'
 
-export const pool = new Pool({
-  host: DB_HOST,
-  port: DB_PORT,
-  database: DB_NAME,
-  user: DB_USER,
-  password: DB_PASSWORD,
-})
+let pool: Pool
+
+if (process.env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  })
+} else {
+  pool = new Pool({
+    host: process.env.DB_HOST || '127.0.0.1',
+    port: Number(process.env.DB_PORT) || 5432,
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'postgres',
+  })
+}
+
+export default pool

@@ -4,16 +4,20 @@ export function StoreCard(store) {
   const card = document.createElement('div')
   card.className = `store-card ${store.isOpen ? 'open' : 'closed'}`
 
+  const imgSrc = store.image || 'https://via.placeholder.com/80'
+
   card.innerHTML = `
-    <div class="store-header">
-      <i class="ri-store-2-line store-icon"></i>
-      <div>
-        <h3 class="store-name">${store.name}</h3>
-        <span class="store-status ${store.isOpen ? 'open' : 'closed'}">
-          ${store.isOpen ? '● Abierto' : '○ Cerrado'}
-        </span>
-      </div>
-    </div>
+    <img
+      src="${imgSrc}"
+      class="store-logo"
+      loading="lazy"
+      onerror="this.src='https://via.placeholder.com/80'"
+      alt="${store.name}"
+    >
+    <h3 class="store-name">${store.name}</h3>
+    <span class="store-status ${store.isOpen ? 'open' : 'closed'}">
+      ${store.isOpen ? '● Abierto' : '○ Cerrado'}
+    </span>
   `
 
   card.addEventListener('click', () => {
