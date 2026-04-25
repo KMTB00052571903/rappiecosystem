@@ -71,11 +71,19 @@ function openDeliveryMap(order) {
   activeOrderId = order.id
   activeStoreId = order.store_id  // needed for store broadcast
 
-  // Parse destination from GeoJSON
+  // Parse destination — Supabase returns PostGIS geography as GeoJSON by default,
+  // but guard against a plain {lat,lng} object and log if neither matches.
   let destLat = 4.711, destLng = -74.072
-  if (order.destination?.coordinates) {
-    destLng = order.destination.coordinates[0]
-    destLat = order.destination.coordinates[1]
+  const dest = order.destination
+  if (dest?.coordinates) {
+    // GeoJSON Point: coordinates = [lng, lat]
+    destLng = dest.coordinates[0]
+    destLat = dest.coordinates[1]
+  } else if (dest?.lat !== undefined && dest?.lng !== undefined) {
+    destLat = dest.lat
+    destLng = dest.lng
+  } else {
+    console.warn('[map] destination format not recognized — using fallback coords', dest)
   }
 
   // Show map section
