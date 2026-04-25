@@ -69,7 +69,7 @@ async function handleAccept(order) {
 function openDeliveryMap(order) {
   isDelivered = false
   activeOrderId = order.id
-  activeStoreId = order.storeId  // needed for store broadcast
+  activeStoreId = order.store_id  // needed for store broadcast
 
   // Parse destination from GeoJSON
   let destLat = 4.711, destLng = -74.072

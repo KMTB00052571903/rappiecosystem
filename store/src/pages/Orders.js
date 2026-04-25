@@ -62,7 +62,7 @@ function buildOrderCard(order) {
       ${badge}
     </div>
     <p style="font-size:13px;margin-top:6px;">${items || 'Sin items'}</p>
-    <p style="font-size:11px;color:#888;">${order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}</p>
+    <p style="font-size:11px;color:#888;">${order.created_at ? new Date(order.created_at).toLocaleString() : ''}</p>
   `
   return card
 }
