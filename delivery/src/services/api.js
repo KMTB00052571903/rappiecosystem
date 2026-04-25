@@ -51,6 +51,7 @@ export async function acceptOrder(orderId) {
   const res = await fetch(`${API_URL}/orders/${orderId}/accept`, {
     method: 'PATCH',
     headers: getHeaders(),
+    body: JSON.stringify({}),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.message)

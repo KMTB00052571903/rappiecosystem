@@ -84,9 +84,9 @@ export const createOrderController = async (req: Request, res: Response) => {
 export const acceptOrderController = async (req: Request, res: Response) => {
   const user = getUserFromRequest(req)
   const { id } = req.params
-  const { lat, lng } = req.body
 
   if (!id) throw Boom.badRequest('Order ID is required')
+  const { lat, lng } = req.body || {}
 
   const order = await acceptOrderService(
     String(id),
