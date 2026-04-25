@@ -14,8 +14,8 @@ export interface Order {
 
 export interface OrderItem {
   id: string
-  orderId: string
-  productId: string
+  order_id: string
+  product_id: string
   quantity: number
 }
 

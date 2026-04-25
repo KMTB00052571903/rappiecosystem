@@ -75,8 +75,8 @@ export const createOrderService = async (dto: CreateOrderDTO): Promise<Order> =>
 
   if (dto.items.length > 0) {
     const orderItems = dto.items.map(item => ({
-      orderId: order.id,
-      productId: item.productId,
+      order_id: order.id,
+      product_id: item.productId,
       quantity: item.quantity,
     }))
 
