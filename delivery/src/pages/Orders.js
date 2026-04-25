@@ -7,6 +7,24 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const STEP = 0.00005  // ~5 meters per key press
 
+// Decodes an EWKB hex string (PostGIS with SRID) to {lat, lng}.
+// Structure (little-endian): 1B byte-order | 4B type (SRID flag = 0x20000000) | 4B SRID | 8B lng | 8B lat
+function parseWKBPoint(wkb) {
+  if (!wkb || typeof wkb !== 'string') return null
+  const hex = wkb.replace(/\s/g, '')
+  if (hex.length < 42) return null  // minimum 21 bytes (no SRID)
+  const bytes = new Uint8Array(hex.length / 2)
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16)
+  }
+  const view = new DataView(bytes.buffer)
+  const le = view.getUint8(0) === 1
+  const wkbType = view.getUint32(1, le)
+  const hasSrid = (wkbType & 0x20000000) !== 0
+  const offset = 1 + 4 + (hasSrid ? 4 : 0)  // byte-order + type + optional SRID
+  return { lng: view.getFloat64(offset, le), lat: view.getFloat64(offset + 8, le) }
+}
+
 let deliveryMap = null
 let deliveryMarker = null
 let supabaseClient = null
@@ -71,12 +89,15 @@ function openDeliveryMap(order) {
   activeOrderId = order.id
   activeStoreId = order.store_id  // needed for store broadcast
 
-  // Parse destination — Supabase returns PostGIS geography as GeoJSON by default,
-  // but guard against a plain {lat,lng} object and log if neither matches.
+  // Parse destination — PostGIS geography comes back as WKB hex from Supabase RPCs;
+  // fall through to GeoJSON or plain {lat,lng} as safety nets.
   let destLat = 4.711, destLng = -74.072
   const dest = order.destination
-  if (dest?.coordinates) {
-    // GeoJSON Point: coordinates = [lng, lat]
+  const destParsed = parseWKBPoint(dest)
+  if (destParsed) {
+    destLat = destParsed.lat
+    destLng = destParsed.lng
+  } else if (dest?.coordinates) {
     destLng = dest.coordinates[0]
     destLat = dest.coordinates[1]
   } else if (dest?.lat !== undefined && dest?.lng !== undefined) {
@@ -91,9 +112,15 @@ function openDeliveryMap(order) {
   document.getElementById('deliveryMapSection').classList.remove('hidden')
   document.getElementById('activeOrderInfo').textContent = `Pedido #${order.id.slice(0, 8)}`
 
-  // Start slightly away from destination so movement is visible
-  currentLat = destLat + 0.001
-  currentLng = destLng
+  // Start from last known delivery_position (also WKB); fallback = offset from dest
+  const posParsed = parseWKBPoint(order.delivery_position)
+  if (posParsed) {
+    currentLat = posParsed.lat
+    currentLng = posParsed.lng
+  } else {
+    currentLat = destLat + 0.001
+    currentLng = destLng
+  }
 
   // Init Leaflet map
   if (deliveryMap) { deliveryMap.remove(); deliveryMap = null }
