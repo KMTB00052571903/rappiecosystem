@@ -2,9 +2,10 @@ const API_URL = 'https://rappiecosystem-oopf.vercel.app/api'
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token')
+  if (!token) throw new Error('No estás autenticado. Por favor inicia sesión.')
   return {
     'Content-Type': 'application/json',
-    Authorization: token ? `Bearer ${token}` : '',
+    Authorization: `Bearer ${token}`,
   }
 }
 
@@ -17,7 +18,12 @@ export async function loginUser(email, password) {
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.message)
-  localStorage.setItem('token', data.session.access_token)
+  // Use optional chaining: if session or access_token is missing, storing
+  // undefined would write the literal string "undefined" to localStorage,
+  // causing every subsequent request to send "Bearer undefined" → 401.
+  const token = data.session?.access_token
+  if (!token) throw new Error('La respuesta del servidor no contiene un token válido')
+  localStorage.setItem('token', token)
   return data
 }
 
@@ -37,7 +43,11 @@ export async function fetchStores() {
   const res = await fetch(`${API_URL}/stores`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.message)
-  return data
+  // Normalise is_open → isOpen in case the DB column comes back in snake_case
+  return data.map(store => ({
+    ...store,
+    isOpen: store.isOpen ?? store.is_open ?? false,
+  }))
 }
 
 // PRODUCTS

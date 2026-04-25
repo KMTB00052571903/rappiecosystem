@@ -1,8 +1,12 @@
 import { renderProducts } from '../pages/Products.js'
 
 export function StoreCard(store) {
+  // Supabase can return the column as isOpen (camelCase, expected) or is_open
+  // (snake_case, defensive fallback). Normalise once so all usages below are safe.
+  const isOpen = store.isOpen ?? store.is_open ?? false
+
   const card = document.createElement('div')
-  card.className = `store-card ${store.isOpen ? 'open' : 'closed'}`
+  card.className = `store-card ${isOpen ? 'open' : 'closed'}`
 
   const imgSrc = store.image || 'https://via.placeholder.com/80'
 
@@ -15,8 +19,8 @@ export function StoreCard(store) {
       alt="${store.name}"
     >
     <h3 class="store-name">${store.name}</h3>
-    <span class="store-status ${store.isOpen ? 'open' : 'closed'}">
-      ${store.isOpen ? '● Abierto' : '○ Cerrado'}
+    <span class="store-status ${isOpen ? 'open' : 'closed'}">
+      ${isOpen ? '● Abierto' : '○ Cerrado'}
     </span>
   `
 

@@ -84,9 +84,27 @@ export const createOrderController = async (req: Request, res: Response) => {
 export const acceptOrderController = async (req: Request, res: Response) => {
   const user = getUserFromRequest(req)
   const { id } = req.params
+  const { lat, lng } = req.body
+
   if (!id) throw Boom.badRequest('Order ID is required')
-  const order = await acceptOrderService(String(id), user.id)
+
+  const order = await acceptOrderService(
+    String(id),
+    user.id,
+    lat !== undefined ? Number(lat) : undefined,
+    lng !== undefined ? Number(lng) : undefined,
+  )
+
   res.json(order)
+
+  // Notify all parties subscribed to this order (consumer + delivery apps)
+  broadcastEvent(`order:${id}`, 'order-accepted', {
+    orderId: order.id,
+    status: order.status,
+    deliveryId: order.deliveryId,
+  }).catch(console.error)
+
+  // Also notify the store so it can update its order list
   if (order.storeId) {
     broadcastEvent(`store:${order.storeId}`, 'order-update', {
       orderId: order.id,
