@@ -3,11 +3,11 @@ import { OrderStatus } from '../../enums/orderStatus.enum'
 
 export interface Order {
   id: string
-  consumerId: string
-  storeId: string
-  deliveryId?: string | null
+  consumer_id: string
+  store_id: string
+  delivery_id?: string | null
   status: OrderStatus
-  createdAt: string
+  created_at: string
   destination: unknown
   delivery_position?: unknown
 }

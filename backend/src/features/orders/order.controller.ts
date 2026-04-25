@@ -101,12 +101,12 @@ export const acceptOrderController = async (req: Request, res: Response) => {
   broadcastEvent(`order:${id}`, 'order-accepted', {
     orderId: order.id,
     status: order.status,
-    deliveryId: order.deliveryId,
+    deliveryId: order.delivery_id,
   }).catch(console.error)
 
   // Also notify the store so it can update its order list
-  if (order.storeId) {
-    broadcastEvent(`store:${order.storeId}`, 'order-update', {
+  if (order.store_id) {
+    broadcastEvent(`store:${order.store_id}`, 'order-update', {
       orderId: order.id,
       status: order.status,
     }).catch(console.error)
@@ -136,8 +136,8 @@ export const updatePositionController = async (req: Request, res: Response) => {
   const payload = { lat: Number(lat), lng: Number(lng), status: result.status }
   broadcastEvent(`order:${id}`, 'position-update', payload).catch(console.error)
 
-  if (result.storeId) {
-    broadcastEvent(`store:${result.storeId}`, 'order-update', {
+  if (result.store_id) {
+    broadcastEvent(`store:${result.store_id}`, 'order-update', {
       orderId: id,
       status: result.status,
     }).catch(console.error)

@@ -1,6 +1,5 @@
 import Boom from '@hapi/boom'
 import { supabase } from '../../config/supabase'
-import pool from '../../config/database'
 import { CreateOrderDTO, Order, OrderStatus, UpdatePositionDTO } from './order.types'
 
 export const getAvailableOrdersService = async (): Promise<Order[]> => {
@@ -8,7 +7,7 @@ export const getAvailableOrdersService = async (): Promise<Order[]> => {
     .from('orders')
     .select('*, order_items(*, products(*))')
     .eq('status', OrderStatus.CREATED)
-    .order('createdAt', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (error) throw Boom.badImplementation(error.message)
   return (data ?? []) as Order[]
@@ -18,8 +17,8 @@ export const getOrdersByConsumerService = async (consumerId: string): Promise<Or
   const { data, error } = await supabase
     .from('orders')
     .select('*, order_items(*, products(*))')
-    .eq('consumerId', consumerId)
-    .order('createdAt', { ascending: false })
+    .eq('consumer_id', consumerId)
+    .order('created_at', { ascending: false })
 
   if (error) throw Boom.badImplementation(error.message)
   return (data ?? []) as Order[]
@@ -29,8 +28,8 @@ export const getOrdersByStoreService = async (storeId: string): Promise<Order[]>
   const { data, error } = await supabase
     .from('orders')
     .select('*, order_items(*, products(*))')
-    .eq('storeId', storeId)
-    .order('createdAt', { ascending: false })
+    .eq('store_id', storeId)
+    .order('created_at', { ascending: false })
 
   if (error) throw Boom.badImplementation(error.message)
   return (data ?? []) as Order[]
@@ -40,8 +39,8 @@ export const getOrdersByDeliveryService = async (deliveryId: string): Promise<Or
   const { data, error } = await supabase
     .from('orders')
     .select('*, order_items(*, products(*))')
-    .eq('deliveryId', deliveryId)
-    .order('createdAt', { ascending: false })
+    .eq('delivery_id', deliveryId)
+    .order('created_at', { ascending: false })
 
   if (error) throw Boom.badImplementation(error.message)
   return (data ?? []) as Order[]
@@ -59,14 +58,19 @@ export const getOrderByIdService = async (orderId: string): Promise<Order> => {
 }
 
 export const createOrderService = async (dto: CreateOrderDTO): Promise<Order> => {
-  const { rows } = await pool.query<Order>(
-    `INSERT INTO orders ("consumerId", "storeId", status, destination)
-     VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($4, $5), 4326))
-     RETURNING *`,
-    [dto.consumerId, dto.storeId, OrderStatus.CREATED, dto.destinationLng, dto.destinationLat],
-  )
+  // RPC handles the PostGIS ST_MakePoint call for the destination geography column.
+  // See: supabase/migrations — function create_order(...)
+  const { data, error } = await supabase.rpc('create_order', {
+    p_consumer_id: dto.consumerId,
+    p_store_id: dto.storeId,
+    p_status: OrderStatus.CREATED,
+    p_lng: dto.destinationLng,
+    p_lat: dto.destinationLat,
+  })
 
-  const order = rows[0]
+  if (error) throw Boom.badImplementation(error.message)
+
+  const order = (data as Order[])[0]
   if (!order) throw Boom.badRequest('Failed to create order')
 
   if (dto.items.length > 0) {
@@ -93,76 +97,70 @@ export const acceptOrderService = async (
   lat?: number,
   lng?: number,
 ): Promise<Order> => {
-  // Build query dynamically: include delivery_position only when coordinates are provided
-  let query: string
-  let params: unknown[]
-
   if (lat !== undefined && lng !== undefined) {
-    // ST_MakePoint expects (longitude, latitude)
-    query = `
-      UPDATE orders
-      SET "deliveryId" = $1,
-          status = $2,
-          delivery_position = ST_SetSRID(ST_MakePoint($3, $4), 4326)
-      WHERE id = $5 AND status = $6
-      RETURNING *`
-    params = [deliveryId, OrderStatus.IN_DELIVERY, lng, lat, orderId, OrderStatus.CREATED]
-  } else {
-    query = `
-      UPDATE orders
-      SET "deliveryId" = $1,
-          status = $2
-      WHERE id = $3 AND status = $4
-      RETURNING *`
-    params = [deliveryId, OrderStatus.IN_DELIVERY, orderId, OrderStatus.CREATED]
+    // Coordinates provided: use RPC to set delivery_position via PostGIS ST_MakePoint.
+    // See: supabase/migrations — function accept_order_with_position(...)
+    const { data, error } = await supabase.rpc('accept_order_with_position', {
+      p_order_id: orderId,
+      p_delivery_id: deliveryId,
+      p_status: OrderStatus.IN_DELIVERY,
+      p_lng: lng,
+      p_lat: lat,
+    })
+
+    if (error) throw Boom.badImplementation(error.message)
+
+    const order = (data as Order[])[0]
+    if (!order) throw Boom.badRequest('Order not available or already accepted')
+    return order
   }
 
-  const { rows } = await pool.query<Order>(query, params)
-  if (!rows[0]) throw Boom.badRequest('Order not available or already accepted')
-  return rows[0]
+  // No initial position: plain Supabase update is sufficient.
+  const { data, error } = await supabase
+    .from('orders')
+    .update({ delivery_id: deliveryId, status: OrderStatus.IN_DELIVERY })
+    .eq('id', orderId)
+    .eq('status', OrderStatus.CREATED)
+    .select()
+    .single()
+
+  if (error || !data) throw Boom.badRequest('Order not available or already accepted')
+  return data as Order
 }
 
 export const updatePositionService = async (
   dto: UpdatePositionDTO,
-): Promise<{ status: string; arrived: boolean; storeId: string }> => {
-  // Step 1: enforce business rule — delivery must stop when order is already delivered
-  const { rows: current } = await pool.query<{ status: string; storeId: string }>(
-    `SELECT status, "storeId" FROM orders WHERE id = $1`,
-    [dto.orderId],
-  )
+): Promise<{ status: string; arrived: boolean; store_id: string }> => {
+  // Step 1: enforce business rule — stop position updates once delivered.
+  const { data: current, error: selectErr } = await supabase
+    .from('orders')
+    .select('status, store_id')
+    .eq('id', dto.orderId)
+    .single()
 
-  if (!current[0]) throw Boom.notFound('Order not found')
-  if (current[0].status === OrderStatus.DELIVERED) {
+  if (selectErr || !current) throw Boom.notFound('Order not found')
+
+  const { status: currentStatus } = current as { status: string; store_id: string }
+  if (currentStatus === OrderStatus.DELIVERED) {
     throw Boom.badRequest('Order already delivered')
   }
 
-  // Step 2: update delivery_position with PostGIS; auto-promote status to 'Entregado'
-  // when ST_DWithin reports the delivery is within 5 metres of the destination.
-  // ST_MakePoint expects (longitude, latitude).
-  const { rows } = await pool.query<{ status: string; storeId: string; arrived: boolean }>(
-    `UPDATE orders
-     SET delivery_position = ST_SetSRID(ST_MakePoint($1, $2), 4326),
-         status = CASE
-           WHEN ST_DWithin(
-             ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-             destination,
-             5
-           ) THEN $3
-           ELSE status
-         END
-     WHERE id = $4
-     RETURNING
-       status,
-       "storeId",
-       ST_DWithin(delivery_position, destination, 5) AS arrived`,
-    [dto.lng, dto.lat, OrderStatus.DELIVERED, dto.orderId],
-  )
+  // Step 2: update delivery_position + auto-promote status via PostGIS ST_DWithin(5m).
+  // See: supabase/migrations — function update_order_position(...)
+  const { data, error } = await supabase.rpc('update_order_position', {
+    p_order_id: dto.orderId,
+    p_lng: dto.lng,
+    p_lat: dto.lat,
+  })
 
-  if (!rows[0]) throw Boom.notFound('Order not found')
+  if (error) throw Boom.badImplementation(error.message)
+
+  const row = (data as { status: string; store_id: string; arrived: boolean }[])[0]
+  if (!row) throw Boom.notFound('Order not found after position update')
 
   return {
-    status: rows[0].status,
-    arrived: rows[0].arrived,
-    storeId: rows[0].storeId ?? '',
+    status: row.status,
+    arrived: row.arrived,
+    store_id: row.store_id ?? '',
   }
 }
